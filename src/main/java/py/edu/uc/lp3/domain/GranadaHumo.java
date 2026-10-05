@@ -1,9 +1,15 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 public final class GranadaHumo extends Granada {
 
+    /** Constructor simple: una granada de humo. */
     public GranadaHumo(String nombre, int precio) {
-        super(nombre, precio, 0, 3000, 5, 1);
+        this(nombre, precio, 1);
+    }
+
+    /** Constructor sobrecargado: el llamador decide cuántas granadas se llevan. */
+    public GranadaHumo(String nombre, int precio, int cantidad) {
+        super(nombre, precio, 0, 3000, 5, cantidad);
     }
 
     @Override

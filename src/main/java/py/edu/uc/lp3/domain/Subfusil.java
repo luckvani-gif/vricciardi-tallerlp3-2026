@@ -1,7 +1,13 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 public final class Subfusil extends ArmaDeFuego {
 
+    /** Constructor simple: el subfusil con su cargador y reserva de fábrica. */
+    public Subfusil(String nombre, int precio, int danioBase) {
+        this(nombre, precio, danioBase, 30, 120);
+    }
+
+    /** Constructor sobrecargado: el llamador decide la munición. */
     public Subfusil(String nombre, int precio, int danioBase, int cargador, int reserva) {
         super(nombre, precio, danioBase, cargador, reserva);
     }

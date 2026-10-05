@@ -1,4 +1,4 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
@@ -9,12 +9,25 @@ import java.util.Optional;
  */
 public abstract class ArmaDeFuego extends Arma {
 
+    /** Munición que se usa cuando el llamador no indica cargador ni reserva. */
+    protected static final int MUNICION_POR_DEFECTO = 30;
+    protected static final int RESERVA_POR_DEFECTO = 90;
+
     private final int capacidadCargador;
     private int balasEnCargador;
     private int reserva;
 
+    /**
+     * Constructor simple: deja el arma con la munición por defecto, en estado legal.
+     * Es el que usan las hijas cuando se construye sin indicar cargador ni reserva.
+     */
+    protected ArmaDeFuego(String nombre, int precio, int danioBase) {
+        this(nombre, precio, danioBase, MUNICION_POR_DEFECTO, RESERVA_POR_DEFECTO);
+    }
+
+    /** Constructor sobrecargado: el llamador decide la munición. */
     protected ArmaDeFuego(String nombre, int precio, int danioBase,
-                          int capacidadCargador, int reserva) {
+                           int capacidadCargador, int reserva) {
         super(nombre, precio, danioBase);
         if (capacidadCargador <= 0) {
             throw new IllegalArgumentException("El cargador debe tener al menos 1 bala");

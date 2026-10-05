@@ -1,7 +1,13 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 public final class Francotirador extends ArmaDeFuego {
 
+    /** Constructor simple: el francotirador con su cargador y reserva de fábrica. */
+    public Francotirador(String nombre, int precio, int danioBase) {
+        this(nombre, precio, danioBase, 5, 30);
+    }
+
+    /** Constructor sobrecargado: el llamador decide la munición. */
     public Francotirador(String nombre, int precio, int danioBase, int cargador, int reserva) {
         super(nombre, precio, danioBase, cargador, reserva);
     }

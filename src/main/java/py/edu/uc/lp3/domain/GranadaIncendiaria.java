@@ -1,9 +1,15 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 public final class GranadaIncendiaria extends Granada {
 
+    /** Constructor simple: una granada incendiaria. */
     public GranadaIncendiaria(String nombre, int precio, int danioBase) {
-        super(nombre, precio, danioBase, 4000, 6, 1);
+        this(nombre, precio, danioBase, 1);
+    }
+
+    /** Constructor sobrecargado: el llamador decide cuántas granadas se llevan. */
+    public GranadaIncendiaria(String nombre, int precio, int danioBase, int cantidad) {
+        super(nombre, precio, danioBase, 4000, 6, cantidad);
     }
 
     @Override

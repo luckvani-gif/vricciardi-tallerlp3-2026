@@ -1,4 +1,4 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +20,14 @@ public class Inventario {
 
     public List<ResultadoDisparo> dispararTodas(double distancia) {
         return armas.stream().map(a -> a.disparar(distancia)).toList();
+    }
+
+    /**
+     * SOBRECARGA de dispararTodas(double): dispara todo el inventario sin indicar
+     * distancia. Delega en la versión con distancia usando la de Arma por defecto.
+     */
+    public List<ResultadoDisparo> dispararTodas() {
+        return dispararTodas(Arma.DISTANCIA_POR_DEFECTO);
     }
 
     public List<String> recargarTodas() {

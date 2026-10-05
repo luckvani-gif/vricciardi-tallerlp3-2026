@@ -1,4 +1,4 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 

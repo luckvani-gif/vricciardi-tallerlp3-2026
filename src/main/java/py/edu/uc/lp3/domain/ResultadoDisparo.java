@@ -1,4 +1,4 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 /** Resultado inmutable de usar un arma. Es lo que se serializa a JSON. */
 public record ResultadoDisparo(String arma, String tipo, boolean exito,
@@ -8,7 +8,7 @@ public record ResultadoDisparo(String arma, String tipo, boolean exito,
         return new ResultadoDisparo(a.getNombre(), a.getTipo(), true, danio, efecto, a.getEstado());
     }
 
-    static ResultadoDisparo fallido(Arma a, String motivo) {
+    public static ResultadoDisparo fallido(Arma a, String motivo) {
         return new ResultadoDisparo(a.getNombre(), a.getTipo(), false, 0, motivo, a.getEstado());
     }
 }

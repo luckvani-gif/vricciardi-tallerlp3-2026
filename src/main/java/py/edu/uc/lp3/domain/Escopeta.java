@@ -1,9 +1,15 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 public final class Escopeta extends ArmaDeFuego {
 
     private static final int PERDIGONES = 8;
 
+    /** Constructor simple: la escopeta con su cargador y reserva de fábrica. */
+    public Escopeta(String nombre, int precio, int danioBase) {
+        this(nombre, precio, danioBase, 8, 32);
+    }
+
+    /** Constructor sobrecargado: el llamador decide la munición. */
     public Escopeta(String nombre, int precio, int danioBase, int cargador, int reserva) {
         super(nombre, precio, danioBase, cargador, reserva);
     }

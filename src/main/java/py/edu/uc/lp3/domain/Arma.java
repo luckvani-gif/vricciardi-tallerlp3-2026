@@ -1,4 +1,4 @@
-package py.edu.uc.lp3.vr.cs2.modelo;
+package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
@@ -11,6 +11,9 @@ import java.util.Optional;
  *   todas (Template Method); las hijas solo completan los pasos abstractos.
  */
 public abstract class Arma {
+
+    /** Distancia que se usa cuando se dispara sin indicar ninguna. */
+    public static final double DISTANCIA_POR_DEFECTO = 10;
 
     private final String nombre;
     private final int precio;
@@ -42,6 +45,15 @@ public abstract class Arma {
         }
         consumirUso();
         return ResultadoDisparo.exitoso(this, calcularDanio(distancia), describirEfecto(distancia));
+    }
+
+    /**
+     * SOBRECARGA de disparar(double): el mismo mensaje con otra lista de argumentos.
+     * Disparar sin indicar distancia usa la distancia por defecto. No duplica el
+     * algoritmo: delega en la versión con distancia, que es la que tiene el flujo.
+     */
+    public final ResultadoDisparo disparar() {
+        return disparar(DISTANCIA_POR_DEFECTO);
     }
 
     public final FichaTienda mostrarEnTienda() {
