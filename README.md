@@ -186,6 +186,8 @@ classDiagram
         -String nombre
         -int precio
         -int danioBase
+        +DISTANCIA_POR_DEFECTO$ double
+        +disparar() ResultadoDisparo
         +disparar(double distancia) ResultadoDisparo
         +mostrarEnTienda() FichaTienda
         +recargar()* String
@@ -203,6 +205,8 @@ classDiagram
         -int capacidadCargador
         -int balasEnCargador
         -int reserva
+        #ArmaDeFuego(String,int,int)
+        #ArmaDeFuego(String,int,int,int,int)
         +recargar() String
         +getEstado() String
         #calcularDanio(double distancia) int
@@ -221,25 +225,54 @@ classDiagram
         -cooldownRestanteMs() long
     }
 
-    class Pistola { #factorDistancia(double) double }
-    class Subfusil { #factorDistancia(double) double }
-    class Rifle { #factorDistancia(double) double }
+    class Pistola {
+        +Pistola(String,int,int)
+        +Pistola(String,int,int,int,int)
+        #factorDistancia(double) double
+    }
+    class Subfusil {
+        +Subfusil(String,int,int)
+        +Subfusil(String,int,int,int,int)
+        #factorDistancia(double) double
+    }
+    class Rifle {
+        +Rifle(String,int,int)
+        +Rifle(String,int,int,int,int)
+        #factorDistancia(double) double
+    }
     class Escopeta {
+        +Escopeta(String,int,int)
+        +Escopeta(String,int,int,int,int)
         -int PERDIGONES$
         #factorDistancia(double) double
         #describirEfecto(double) String
     }
     class Francotirador {
+        +Francotirador(String,int,int)
+        +Francotirador(String,int,int,int,int)
         #factorDistancia(double) double
         #describirEfecto(double) String
     }
-    class GranadaHumo { #describirEfecto(double) String }
-    class GranadaFlash { #describirEfecto(double) String }
-    class GranadaIncendiaria { #describirEfecto(double) String }
+    class GranadaHumo {
+        +GranadaHumo(String,int)
+        +GranadaHumo(String,int,int)
+        #describirEfecto(double) String
+    }
+    class GranadaFlash {
+        +GranadaFlash(String,int)
+        +GranadaFlash(String,int,int)
+        #describirEfecto(double) String
+    }
+    class GranadaIncendiaria {
+        +GranadaIncendiaria(String,int,int)
+        +GranadaIncendiaria(String,int,int,int,int)
+        #describirEfecto(double) String
+    }
 
     class Inventario {
         -List~Arma~ armas
         +agregar(Arma)
+        +dispararTodas() List~ResultadoDisparo~
         +dispararTodas(double) List~ResultadoDisparo~
         +recargarTodas() List~String~
         +tienda() List~FichaTienda~
