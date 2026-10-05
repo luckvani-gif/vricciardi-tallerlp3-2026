@@ -6,6 +6,16 @@ herencia, sobreescritura, clases abstractas y ocultamiento de la información.
 Materia: Lenguajes de Programación 3 — Taller de Git + POO.
 Licencia: Apache License 2.0.
 
+## Entrega
+
+| Qué | Dónde |
+|---|---|
+| Commit de la entrega | [`532c5f4`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/532c5f43c4d1902e3163c2820848d212333ba09f) — *Aplica template de LP3, sobrecargas y documentacion de la rubrica* |
+| Código | `src/main/java/py/edu/uc/lp3` |
+| Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`mvn test`) |
+| Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
+| Documentación | este `README.md` (organización, endpoints, sobrecarga y sobreescritura) |
+
 ## Organización del código
 
 La estructura sigue el **template del TP de LP3** (`domain` → `service` → `rest.controller`,
