@@ -1,6 +1,6 @@
 package py.edu.uc.lp3.domain;
 
-public final class Rifle extends ArmaDeFuego {
+public final class Rifle extends ArmaDeFuego implements Equipable {
 
     /** Constructor simple: el rifle con su cargador y reserva de fábrica. */
     public Rifle(String nombre, int precio, int danioBase) {
@@ -15,6 +15,11 @@ public final class Rifle extends ArmaDeFuego {
     @Override
     protected double factorDistancia(double distancia) {
         return Math.max(0.7, 1 - distancia / 200);
+    }
+
+    @Override
+    public String ranura() {
+        return "primaria";
     }
 
     @Override

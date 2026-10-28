@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import py.edu.uc.lp3.constants.ApiPaths;
 import py.edu.uc.lp3.domain.Arma;
+import py.edu.uc.lp3.domain.Equipable;
 import py.edu.uc.lp3.domain.FichaTienda;
+import py.edu.uc.lp3.domain.GranadaHumo;
 import py.edu.uc.lp3.domain.ResultadoDisparo;
+import py.edu.uc.lp3.domain.Rifle;
 import py.edu.uc.lp3.service.ArmaService;
 
 /**
@@ -66,6 +69,23 @@ public class ArmaController {
 		respuesta.put("recarga", arma.recargar());
 		respuesta.put("estadoFinal", arma.getEstado());
 		return respuesta;
+	}
+
+	@GetMapping("/equipables")
+	public List<Map<String, Object>> mensajeDeEquipadoATravesDeLaInterfaz() {
+		List<Equipable> equipables = List.of(
+				new Rifle("AK-47", 2700, 36),
+				new GranadaHumo("Humo", 300));
+		return equipables.stream()
+				.map(equipable -> {
+					Map<String, Object> item = new LinkedHashMap<>();
+					item.put("clase", equipable.getClass().getSimpleName());
+					item.put("tipoDeInterfaz", Equipable.class.getSimpleName());
+					item.put("ranura", equipable.ranura());
+					item.put("mensaje", equipable.mensajeDeEquipado());
+					return item;
+				})
+				.toList();
 	}
 
 }

@@ -1,6 +1,6 @@
 package py.edu.uc.lp3.domain;
 
-public final class GranadaHumo extends Granada {
+public final class GranadaHumo extends Granada implements Equipable {
 
     /** Constructor simple: una granada de humo. */
     public GranadaHumo(String nombre, int precio) {
@@ -15,6 +15,16 @@ public final class GranadaHumo extends Granada {
     @Override
     protected String describirEfecto(double distancia) {
         return "Cortina de humo a " + distancia + " m (bloquea visión)";
+    }
+
+    @Override
+    public String ranura() {
+        return "explosiva";
+    }
+
+    @Override
+    public String mensajeDeEquipado() {
+        return "No se equipa: se lleva en la ranura explosiva y se lanza con la tecla G.";
     }
 
     @Override
