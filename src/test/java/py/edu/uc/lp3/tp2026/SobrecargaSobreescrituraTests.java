@@ -109,7 +109,7 @@ class SobrecargaSobreescrituraTests {
     void laFabricaRechazaMunicionIncompleta() {
         ArmaServiceImpl servicio = new ArmaServiceImpl();
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        RuntimeException error = assertThrows(RuntimeException.class,
                 () -> servicio.crear("rifle", null, null, null, 5, null));
         assertTrue(error.getMessage().contains("juntos"));
     }

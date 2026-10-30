@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class GranadaHumo extends Granada implements Equipable {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("humo")
+public class GranadaHumo extends Granada implements Equipable {
+
+    /** Constructor vacío para JPA. */
+    protected GranadaHumo() {
+    }
 
     /** Constructor simple: una granada de humo. */
     public GranadaHumo(String nombre, int precio) {

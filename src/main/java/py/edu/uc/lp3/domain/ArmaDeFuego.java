@@ -2,20 +2,37 @@ package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+
 /**
  * Generaliza el control de munición: antes cada arma repetía la lógica de
  * cargador y recarga; ahora vive una sola vez acá y es final.
  * Las hijas solo definen cómo cae el daño con la distancia.
  */
+@Entity
+@DiscriminatorValue("arma_de_fuego")
 public abstract class ArmaDeFuego extends Arma {
 
     /** Munición que se usa cuando el llamador no indica cargador ni reserva. */
     protected static final int MUNICION_POR_DEFECTO = 30;
     protected static final int RESERVA_POR_DEFECTO = 90;
 
-    private final int capacidadCargador;
-    private int balasEnCargador;
-    private int reserva;
+    @Column
+    private Integer capacidadCargador;
+
+    @Column
+    private Integer balasEnCargador;
+
+    @Column
+    private Integer reserva;
+
+    /** Constructor vacío para JPA. */
+    protected ArmaDeFuego() {
+    }
 
     /**
      * Constructor simple: deja el arma con la munición por defecto, en estado legal.
@@ -38,6 +55,29 @@ public abstract class ArmaDeFuego extends Arma {
         this.capacidadCargador = capacidadCargador;
         this.balasEnCargador = capacidadCargador;
         this.reserva = reserva;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validarMunicionAntesDeGuardar() {
+        if (capacidadCargador == null || capacidadCargador <= 0) {
+            throw new IllegalArgumentException("El cargador debe tener al menos 1 bala");
+        }
+        int cargador = capacidadCargador;
+        int balas = balasEnCargador == null ? cargador : balasEnCargador;
+        int res = reserva == null ? 0 : reserva;
+        if (balas < 0 || balas > cargador) {
+            throw new IllegalArgumentException("Las balas en el cargador deben estar entre 0 y la capacidad");
+        }
+        if (res < 0) {
+            throw new IllegalArgumentException("La reserva no puede ser negativa");
+        }
+        if (balasEnCargador == null) {
+            balasEnCargador = cargador;
+        }
+        if (reserva == null) {
+            reserva = 0;
+        }
     }
 
     @Override

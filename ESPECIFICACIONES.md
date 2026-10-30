@@ -1,37 +1,36 @@
-# Especificaciones del ejercicio POO-06
+# Especificaciones aplicadas al dominio (POO-08)
 
 ## Datos
 
 - **Estudiante:** [luckvani-gif](https://github.com/luckvani-gif)
 - **Repositorio:** `https://github.com/luckvani-gif/vricciardi-tallerlp3-2026`
-- **Commit de la solución:** `https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/532c5f43c4d1902e3163c2820848d212333ba09f`
-- **Rama publicada:** `vr-contribucion-lp3`
+- **Commit de la solución:** `1f6c59fefbcd15e4a3a7c436b1374ba828784545`
+- **Rama publicada:** `main`
 - **Dominio elegido:** Counter-Strike 2 (CS2)
 
 ## Objetivo
 
-Publicar un servicio HTTP con Spring Boot, sobre el modelado de Counter-Strike 2. Se aplican herencia, sobreescritura, ocultamiento de la información, paquetes con sentido, constructores simples y sobrecargados, y sobrecarga de al menos un mensaje del dominio. El servicio debe arrancar con `./mvnw spring-boot:run` y poder usarse por HTTP, sin ejecutar un `main()` desde el IDE.
+Publicar un servicio HTTP con Spring Boot sobre el modelado de Counter-Strike 2 con **persistencia en H2**, **CRUD REST completo**, **herencia persistida** (clase base + dos clases hijas), **interfaz de dominio**, **jerarquía de excepciones con handler por tipo**, **colección Insomnia** versionada y reutilización de los mecanismos de POO-06 (sobrecarga y sobreescritura).
 
-## Consignas aplicadas al dominio
+## Consignas aplicadas
 
-1. **Paquetes**: las clases siguen el template de [lp3-template-tp](https://github.com/alefq/lp3-template-tp/tree/main/src/main/java/py/edu/uc/lp3). El proyecto está organizado en `py.edu.uc.lp3.domain`, `py.edu.uc.lp3.rest.controller`, `py.edu.uc.lp3.service` + `service.impl` y `py.edu.uc.lp3.constants`.
-2. **Modelado**: se mantiene la jerarquía completa del modelo (`Arma`, `ArmaDeFuego`, `Granada`, las 5 armas de fuego y las 3 granadas), con atributos privados, sin setters y validaciones en los constructores.
-3. **Sobreescritura**: las clases hijas **sobreescriben** los métodos abstractos definidos en el padre (`getTipo()`, `getEstado()`, `recargar()`, `describirEfecto(double)`, `detalleTienda()`, `motivoBloqueo()`, `consumirUso()`, `calcularDanio(double)`). `ArmaDeFuego` deja `final` parte del flujo y agrega `factorDistancia(double)`, que cada arma de fuego sobreescribe con su propia caída de daño.
-4. **Servicios REST**:
-   - `IndexController` en `GET /` informa el estado del servicio y lista los endpoints disponibles.
-   - `ArmaController` construye armas desde la URL (`/armas/{tipo}` y `/armas/{tipo}/disparar`).
-   - `InventarioController` arma un inventario completo (`/inventario` y `/inventario/disparar`) y muestra el comportamiento de cada clase hija polimórficamente.
-5. **Construcción por URL**: los controllers reciben parámetros vía `@RequestParam` (`nombre`, `precio`, `danio`, `cargador`, `reserva`, `distancia`, `veces`). `distancia` es **opcional** para permitir la sobrecarga del mensaje. Si los valores rompen una regla, `ManejadorErrores` traduce `IllegalArgumentException` a **400 Bad Request**.
-6. **Constructores simples y sobrecargados**:
-   - Armas de fuego: constructor simple (3 parámetros: nombre, precio, daño) y constructor sobrecargado (5 parámetros: +cargador y reserva). El simple delega en el sobrecargado con `this(...)`.
-   - Granadas: constructor simple (nombre, precio —y daño en el caso de incendiaria) y constructor sobrecargado con `cantidad`. Delegación con `this(...)`.
-7. **Sobrecarga del mensaje del dominio**: `Arma.disparar()` (sin argumentos) **sobrecarga** a `Arma.disparar(double distancia)`. Usa `DISTANCIA_POR_DEFECTO = 10` y delega en la versión con distancia. `Inventario.dispararTodas()` sobrecarga a `Inventario.dispararTodas(double distancia)`, delegando también en la versión con argumento.
-8. **Visibilidad y polimorfismo**: todos los atributos son `private`. `Inventario` trabaja con `List<Arma>` y no usa `if` ni `instanceof`: el comportamiento sale de los métodos sobreescritos. `ArmaServiceImpl` es el único punto donde se elige el tipo concreto.
-9. **Pruebas**: `Tp2026ApplicationTests` verifica que la aplicación levanta. `SobrecargaSobreescrituraTests` (11 pruebas) cubre constructores simples/sobrecargados, sobrecarga de mensajes, sobreescritura, polimorfismo e invariantes. Todos pasan (`mvn test` → BUILD SUCCESS, 12 tests).
+1. **Paquetes**: `domain`, `rest.controller`, `service` + `service.impl`, `repository`, `exceptions`, `constants`, `rest.dto` siguiendo el template.
+2. **Persistencia**: `spring-boot-starter-data-jpa` + H2. `Arma` es `@Entity` con `@Inheritance(SINGLE_TABLE)`, `@DiscriminatorColumn("tipo_arma")`. Constructor vacío `protected` para JPA; constructores de negocio mantienen ocultamiento e invariantes. `@PrePersist/@PreUpdate` validan antes de guardar.
+3. **Herencia**: `Arma` (base) → `ArmaDeFuego` y `Granada` (dos hijas independientes). Cinco armas de fuego y cuatro granadas. Método abstracto existe y se sobreescribe.
+4. **Interfaz de dominio**: `Equipable` con `ranura()` y `mensajeDeEquipado()`. Implementado por `Rifle` y `GranadaHumo`. Endpoint `GET /api/armas/equipables` usa el tipo `Equipable` (polimorfismo entre familias).
+5. **Repositorio**: `ArmaRepository extends JpaRepository<Arma,Long>` con `findByNombreContainingIgnoreCase`. Interfaz: Spring Data genera implementación. Controller/servicio dependen de la interfaz.
+6. **CRUD REST** (`/api/armas`):
+   - `POST` → crea, guarda con `id`, responde `201`
+   - `GET` → lista desde repositorio; `GET /{id}` devuelve `404` si no existe
+   - `PUT` → reemplaza datos; rechaza cambio de tipo con `409`
+   - `DELETE` → borra, responde `204`; `404` si no existe
+   - `POST /{id}/disparar` y `/recargar` modifican estado persistido
+7. **Errores**: jerarquía `ApiException` con subclases; `ManejadorErrores` tiene handler por tipo → `400/404/409`. `IllegalArgumentException` también mapeado a `400`. `POST` ilegal no persiste filas inválidas.
+8. **Sobrecarga y sobreescritura**: se mantienen. `disparar()` sin argumentos sobrecarga `disparar(double)`. Constructores simples/sobrecargados con delegación.
+9. **Colección Insomnia**: `insomnia/CS2-CRUD-Insomnia.json` con entorno, un pedido por verbo, casos de error, endpoint de interfaz.
+10. **Pruebas**: `ArmaCrudIntegrationTest` cubre CRUD, errores por tipo, simulación persistente, endpoint de interfaz. Todos pasan.
 
 ## Cómo probarlo
-
-Requisitos: Java 21 y Maven (se usa el wrapper incluido).
 
 ```bash
 cd vricciardi-tallerlp3-2026
@@ -39,59 +38,68 @@ cd vricciardi-tallerlp3-2026
 ./mvnw spring-boot:run
 ```
 
-El servicio queda disponible en `http://localhost:8080`.
+Servicio en `http://localhost:8080`. Consola H2: `http://localhost:8080/h2-console` (URL `jdbc:h2:file:./data/cs2`).
 
-### Pruebas manuales
-
+### Pruebas manuales (CRUD)
 ```bash
-# Servicio vivo (index)
-curl "http://localhost:8080/"
+# Crear
+curl -X POST http://localhost:8080/api/armas -H 'Content-Type: application/json' \
+  -d '{"tipo":"rifle","nombre":"AK-47","precio":2700,"danio":36,"cargador":30,"reserva":90}'
 
-# Construir un arma por URL (constructor simple del dominio)
-curl "http://localhost:8080/armas/pistola"
-curl "http://localhost:8080/armas/rifle"
+# Listar / leer
+curl http://localhost:8080/api/armas
+curl http://localhost:8080/api/armas/1
 
-# Construir con parámetros sobrecargados (cargador/reserva)
-curl "http://localhost:8080/armas/pistola?cargador=5&reserva=10"
+# Actualizar
+curl -X PUT http://localhost:8080/api/armas/1 -H 'Content-Type: application/json' \
+  -d '{"tipo":"rifle","nombre":"AK-47 Redline","precio":3000,"danio":40}'
 
-# Disparar sin distancia (SOBRECARGA: usa distancia por defecto 10 m)
-curl "http://localhost:8080/armas/rifle/disparar?veces=2"
+# Simular
+curl -X POST http://localhost:8080/api/armas/1/disparar?distancia=10
+curl -X POST http://localhost:8080/api/armas/1/recargar
 
-# Disparar con distancia (versión con argumento)
-curl "http://localhost:8080/armas/rifle/disparar?distancia=60&veces=2"
+# Interfaz Equipable
+curl http://localhost:8080/api/armas/equipables
 
-# Inventario completo (polimorfismo: una clase hija por fila)
-curl "http://localhost:8080/inventario"
+# Errores
+curl -X POST http://localhost:8080/api/armas -H 'Content-Type: application/json' -d '{"tipo":"rifle","precio":-5,"danio":36}'
+curl http://localhost:8080/api/armas/999999
+curl -X DELETE http://localhost:8080/api/armas/999999
+curl -X PUT http://localhost:8080/api/armas/1 -H 'Content-Type: application/json' -d '{"tipo":"humo","nombre":"X","precio":1,"danio":0}'
 
-# Disparar todo el inventario (sobrecarga sin distancia)
-curl "http://localhost:8080/inventario/disparar?veces=1"
-
-# Disparar todo el inventario con distancia
-curl "http://localhost:8080/inventario/disparar?distancia=5&veces=1"
-
-# Validación: parámetros inválidos -> 400 Bad Request
-curl "http://localhost:8080/armas/pistola?precio=-5"
-curl "http://localhost:8080/armas/pistola?cargador=5"        # faltan cargador y reserva juntos
-curl "http://localhost:8080/armas/lanzador?veces=1"
-curl "http://localhost:8080/armas/rifle/disparar?veces=0"
+# Borrar
+curl -X DELETE http://localhost:8080/api/armas/1
 ```
 
-### Ejecución de pruebas automatizadas
-
+### Pruebas automatizadas
 ```bash
 ./mvnw test
 ```
-
-Resultado esperado: `BUILD SUCCESS` con 12 tests en total (1 de `Tp2026ApplicationTests` + 11 de `SobrecargaSobreescrituraTests`).
+Esperado: `BUILD SUCCESS` con 21 tests.
 
 ## Archivos relevantes
+- **Dominio/entidades**: `src/main/java/py/edu/uc/lp3/domain/` (Arma, ArmaDeFuego, Granada, hijas, Equipable)
+- **Persistencia**: `src/main/java/py/edu/uc/lp3/repository/ArmaRepository.java`
+- **Excepciones**: `src/main/java/py/edu/uc/lp3/exceptions/`
+- **Servicios**: `src/main/java/py/edu/uc/lp3/service/ArmaService.java`, `src/main/java/py/edu/uc/lp3/service/impl/ArmaServiceImpl.java`
+- **REST**: `src/main/java/py/edu/uc/lp3/rest/controller/ArmaCrudController.java`, `ManejadorErrores.java`, `IndexController.java`
+- **Config**: `src/main/resources/application.properties`, `pom.xml`
+- **Pruebas**: `src/test/java/py/edu/uc/lp3/tp2026/ArmaCrudIntegrationTest.java`, `SobrecargaSobreescrituraTests.java`
+- **Insomnia**: `insomnia/CS2-CRUD-Insomnia.json`
+- **Docs**: `README.md`, `BITACORA.md`, `ESPECIFICACIONES.md`
 
-- **Código fuente:** `src/main/java/py/edu/uc/lp3/` — `domain`, `rest.controller`, `service` + `service.impl`, `constants`, `Application.java`
-- **Pruebas:** `src/test/java/py/edu/uc/lp3/tp2026/Tp2026ApplicationTests.java`, `SobrecargaSobreescrituraTests.java`
-- **Documentación:** `README.md` (organización, endpoints, diagrama Mermaid, apartado sobrecarga y sobreescritura), `BITACORA.md` (asistente, modelo LLM, resumen de prompts), `LICENSE` (Apache 2.0)
+## Preguntas de anclaje (respuestas)
+
+- **Recurso/verbo**: Recurso `armas` en `/api/armas`. Verbo HTTP indica acción (POST crear, GET leer, PUT actualizar, DELETE borrar). No se usan verbos en la URL.
+- **Identidad**: Clave `id` generado por JPA (`@GeneratedValue`). El JSON de creación omite `id`.
+- **Herencia/tablas**: `SINGLE_TABLE` con `tipo_arma` discriminador. Permite polimorfismo con una sola tabla. El tipo se ve en el discriminador/serialización.
+- **Interfaz/repositorio**: `ArmaRepository` es interfaz (desacoplamiento, fácil cambio de implementación). `Equipable` es protocolo del dominio usado por endpoint.
+- **Ocultamiento**: validación en constructores, `@PrePersist/@PreUpdate`, servicio/controller delegan al dominio. `POST` inválido devuelve `400` y no persiste.
+- **PUT/PATCH**: Se usa **PUT** para reemplazar datos editables; no se permite cambiar `tipo` (409). Campos no enviados → validación falla o se mantienen según lógica.
+- **DELETE**: Borrado **físico** con `delete(Arma)`; responde `204`. `GET` posterior devuelve `404`.
 
 ## Referencias
-
-- Enunciado: [ejercicio-poo-06-revision-paquetes-constructores-2026-09-30.md](https://github.com/alefq/afq-taller-git-2024/blob/main/docs/ejercicio-poo-06-revision-paquetes-constructores-2026-09-30.md)
+- Enunciado POO-08: [ejercicio-poo-08-crud-h2-insomnia-2026-10-28.md](https://github.com/alefq/afq-taller-git-2024/blob/main/docs/ejercicio-poo-08-crud-h2-insomnia-2026-10-28.md)
+- Enunciado POO-06: [ejercicio-poo-06-revision-paquetes-constructores-2026-09-30.md](https://github.com/alefq/afq-taller-git-2024/blob/main/docs/ejercicio-poo-06-revision-paquetes-constructores-2026-09-30.md)
 - Rúbrica: [RUBRICA-ejercicios-lp3-2026.md](https://github.com/alefq/afq-taller-git-2024/blob/main/docs/RUBRICA-ejercicios-lp3-2026.md)
 - Template: [lp3-template-tp](https://github.com/alefq/lp3-template-tp/tree/main/src/main/java/py/edu/uc/lp3)

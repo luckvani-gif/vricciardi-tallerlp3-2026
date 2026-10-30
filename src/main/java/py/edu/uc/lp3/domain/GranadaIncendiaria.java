@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class GranadaIncendiaria extends Granada {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("incendiaria")
+public class GranadaIncendiaria extends Granada {
+
+    /** Constructor vacío para JPA. */
+    protected GranadaIncendiaria() {
+    }
 
     /** Constructor simple: una granada incendiaria. */
     public GranadaIncendiaria(String nombre, int precio, int danioBase) {

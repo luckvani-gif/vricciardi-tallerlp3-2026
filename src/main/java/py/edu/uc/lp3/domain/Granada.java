@@ -2,16 +2,34 @@ package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+
 /**
  * Las granadas no tienen cargador: se controlan por cantidad y cooldown.
  * Ese control es final y private: desde afuera no se puede saltear el cooldown.
  */
+@Entity
+@DiscriminatorValue("granada")
 public abstract class Granada extends Arma {
 
-    private final long cooldownMs;
-    private final double radio;
-    private int cantidad;
+    @Column
+    private Long cooldownMs;
+
+    @Column
+    private Double radio;
+
+    @Column
+    private Integer cantidad;
+
     private long ultimoLanzamientoMs = -1;
+
+    /** Constructor vacío para JPA. */
+    protected Granada() {
+    }
 
     protected Granada(String nombre, int precio, int danioBase,
                       long cooldownMs, double radio, int cantidad) {
@@ -28,6 +46,26 @@ public abstract class Granada extends Arma {
         this.cooldownMs = cooldownMs;
         this.radio = radio;
         this.cantidad = cantidad;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validarGranadaAntesDeGuardar() {
+        if (cooldownMs == null || cooldownMs < 0) {
+            throw new IllegalArgumentException("El cooldown no puede ser negativo");
+        }
+        if (radio == null || radio <= 0) {
+            throw new IllegalArgumentException("El radio debe ser positivo");
+        }
+        if (cantidad == null || cantidad < 0) {
+            throw new IllegalArgumentException("La cantidad de granadas no puede ser negativa");
+        }
+        if (ultimoLanzamientoMs < -1) {
+            throw new IllegalArgumentException("El último lanzamiento no es válido");
+        }
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("Debe haber al menos una granada");
+        }
     }
 
     @Override

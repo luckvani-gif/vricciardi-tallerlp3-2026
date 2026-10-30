@@ -8,8 +8,12 @@ public class ApiPaths {
 
 	public static final String INDEX = BASE_API + "/";
 
-	//Operaciones con armas
+	//Operaciones con armas (catalogo en memoria de POO-06)
 	public static final String ARMAS = BASE_API + "/armas";
+
+	//CRUD persistido en H2 (POO-08)
+	public static final String API = BASE_API + "/api";
+	public static final String ARMAS_CRUD = API + "/armas";
 
 	//Operaciones con el inventario
 	public static final String INVENTARIO = BASE_API + "/inventario";

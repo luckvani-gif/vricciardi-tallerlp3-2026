@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class Escopeta extends ArmaDeFuego {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("escopeta")
+public class Escopeta extends ArmaDeFuego {
+
+    /** Constructor vacío para JPA. */
+    protected Escopeta() {
+    }
 
     private static final int PERDIGONES = 8;
 

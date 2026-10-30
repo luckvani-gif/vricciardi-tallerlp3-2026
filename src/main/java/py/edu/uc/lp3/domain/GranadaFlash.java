@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class GranadaFlash extends Granada {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("flash")
+public class GranadaFlash extends Granada {
+
+    /** Constructor vacío para JPA. */
+    protected GranadaFlash() {
+    }
 
     /** Constructor simple: dos granadas flash, la cantidad que trae el arma de fábrica. */
     public GranadaFlash(String nombre, int precio) {

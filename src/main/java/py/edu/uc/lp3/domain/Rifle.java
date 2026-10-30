@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class Rifle extends ArmaDeFuego implements Equipable {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("rifle")
+public class Rifle extends ArmaDeFuego implements Equipable {
+
+    /** Constructor vacío para JPA. */
+    protected Rifle() {
+    }
 
     /** Constructor simple: el rifle con su cargador y reserva de fábrica. */
     public Rifle(String nombre, int precio, int danioBase) {

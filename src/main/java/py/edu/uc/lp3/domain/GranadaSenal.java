@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class GranadaSenal extends Granada {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("senal")
+public class GranadaSenal extends Granada {
+
+    /** Constructor vacío para JPA. */
+    protected GranadaSenal() {
+    }
 
     public GranadaSenal(String nombre, int precio) {
         this(nombre, precio, 1);

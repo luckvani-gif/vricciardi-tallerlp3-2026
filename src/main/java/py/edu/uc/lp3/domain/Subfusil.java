@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class Subfusil extends ArmaDeFuego {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("subfusil")
+public class Subfusil extends ArmaDeFuego {
+
+    /** Constructor vacío para JPA. */
+    protected Subfusil() {
+    }
 
     /** Constructor simple: el subfusil con su cargador y reserva de fábrica. */
     public Subfusil(String nombre, int precio, int danioBase) {

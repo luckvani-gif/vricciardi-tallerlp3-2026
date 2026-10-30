@@ -1,7 +1,8 @@
 # Taller Git 2026 — Armas de Counter-Strike 2
 
 Servicio HTTP (Spring Boot, API REST) que modela las armas de **Counter-Strike 2** aplicando
-herencia, sobreescritura, clases abstractas y ocultamiento de la información.
+herencia, sobreescritura, ocultamiento de la información, **persistencia con H2 + JPA**,
+**CRUD REST completo** y **colección Insomnia**.
 
 Materia: Lenguajes de Programación 3 — Taller de Git + POO.
 Licencia: Apache License 2.0.
@@ -10,62 +11,75 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la entrega | [`532c5f4`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/532c5f43c4d1902e3163c2820848d212333ba09f) — *Aplica template de LP3, sobrecargas y documentacion de la rubrica* |
+| Commit de la entrega | [`1f6c59f`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/1f6c59fefbcd15e4a3a7c436b1374ba828784545) — *POO-08: CRUD REST con H2, JPA, Insomnia y jerarquía persistida* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`mvn test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
-| Documentación | este `README.md` (organización, endpoints, sobrecarga y sobreescritura) |
+| Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
+| Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
+| Documentación | este `README.md` |
 
 ## Organización del código
 
 La estructura sigue el **template del TP de LP3** (`domain` → `service` → `rest.controller`,
-con `constants` para lo que se repite), de modo que el flujo de una petición se lee de un vistazo:
+con `constants` para lo que se repite), con `repository` para la capa de persistencia
+y `exceptions` para la jerarquía de errores.
 
 ```
 src/main/java/py/edu/uc/lp3
 ├── Application.java                  @SpringBootApplication + @ComponentScan + @EnableJpaRepositories + @EntityScan
 ├── constants
-│   ├── ApiPaths.java                 rutas de la API (BASE_API + "/armas", "/inventario", ...)
+│   ├── ApiPaths.java                 rutas de la API (BASE_API + "/armas", "/inventario", "/api/armas")
 │   └── TiposArma.java                tipos válidos: pistola, subfusil, rifle, ..., granadas
 ├── domain                            el modelo: no sabe nada de Spring ni de HTTP
-│   ├── Arma.java                     clase abstracta, Template Method de disparar()
+│   ├── Arma.java                     entidad base (@Entity, SINGLE_TABLE, @DiscriminatorColumn) + Template Method
 │   ├── ArmaDeFuego.java              abstracta, generaliza la munición
 │   ├── Granada.java                  abstracta, generaliza cantidad y cooldown
 │   ├── Pistola, Subfusil, Rifle, Escopeta, Francotirador
-│   ├── GranadaHumo, GranadaFlash, GranadaIncendiaria
+│   ├── GranadaHumo, GranadaFlash, GranadaIncendiaria, GranadaSenal
+│   ├── Equipable.java                interfaz de dominio (POO-07)
 │   ├── Inventario.java               List<Arma>, dispara todas sin if/instanceof
 │   ├── FichaTienda.java              record
-│   └── ResultadoDisparo.java         record
-├── rest/controller                   la capa web: solo habla con los servicios
-│   ├── IndexController.java
-│   ├── ArmaController.java
-│   ├── InventarioController.java
-│   └── ManejadorErrores.java         @RestControllerAdvice: excepción -> 400
+│   ├── ResultadoDisparo.java         record
+│   └── ResultadoRecarga.java         record
+├── exceptions                        jerarquía: ApiException -> SolicitudInvalida/TipoNoSoportado, RecursoNoEncontrado, ConflictoDeEstado
+├── repository                        interfaces Spring Data
+│   └── ArmaRepository.java           JpaRepository<Arma,Long> + findByNombreContainingIgnoreCase
+├── rest
+│   ├── controller                   capa web: solo habla con los servicios
+│   │   ├── IndexController.java
+│   │   ├── ArmaController.java      catálogo POO-06 (GET /armas/{tipo})
+│   │   ├── ArmaCrudController.java  CRUD /api/armas (POST/GET/PUT/DELETE + disparar/recargar + equipables)
+│   │   ├── InventarioController.java
+│   │   └── ManejadorErrores.java    @RestControllerAdvice: un handler por tipo de excepción
+│   └── dto
+│       └── ArmaRequest.java         discriminador "tipo" para crear la clase hija
 └── service                           interfaz de servicio
     ├── ArmaService.java
     ├── InventarioService.java
     └── impl
-        ├── ArmaServiceImpl.java      @Service: el único lugar que elige el tipo concreto
+        ├── ArmaServiceImpl.java      @Service: único lugar que elige el tipo concreto + CRUD persistente
         └── InventarioServiceImpl.java @Service: arma el inventario completo
-
-src/test/java/py/edu/uc/lp3/tp2026/
-├── Tp2026ApplicationTests.java        la app levanta y el índice responde
-└── SobrecargaSobreescrituraTests.java sobrecargas, sobreescrituras e invariantes
 ```
 
-`ArmaService` e `InventarioService` son las implementaciones del patrón del template
-(interface + `service.impl` con `@Service`, inyectado en los controllers con `@Autowired`).
-Antes esta lógica vivía en `FabricaArmas`, que quedó reemplazado por `ArmaServiceImpl`.
+## Dependencias y configuración H2
 
-Dos desviaciones conscientes respecto del template:
+`pom.xml` incluye `spring-boot-starter-data-jpa` y `com.h2database:h2`. La configuración está en `src/main/resources/application.properties`:
 
-- **No hay `repository`.** El dominio no se persiste: `Arma` es abstracta, inmutable y sin
-  identificador, así que no puede ser una entidad JPA. Los endpoints son cálculos sobre el modelo.
-  Si más adelante hay que guardar armas o inventario, ahí entra `py.edu.uc.lp3.repository`.
-- **No hay `py.edu.uc.lp3exceptions`.** El modelo lanza `IllegalArgumentException` y
-  `ManejadorErrores` la traduce a 400; las excepciones propias irían en ese paquete.
-- `ApiPaths.BASE_API` quedó vacío para no cambiar las URLs públicas del taller; adoptarlo como
-  `/api/lp3` es cambiar una sola constante.
+```properties
+spring.application.name=vricciardi-tallerlp3-2026
+spring.datasource.url=jdbc:h2:file:./data/cs2        # archivo: persiste entre reinicios
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update                # crea/actualiza el esquema desde las entidades
+spring.jpa.open-in-view=false
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+```
+
+- **URL JDBC**: `jdbc:h2:file:./data/cs2` guarda las filas en `./data/cs2.mv.db`. Al reiniciar la app, lo guardado sigue ahí.
+- **`ddl-auto=update`**: Hibernate genera/actualiza las tablas según `@Entity` (`armas` con `tipo_arma` discriminador).
+- **Consola H2**: `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:file:./data/cs2`, usuario `sa`).
 
 ## Requisitos y ejecución
 
@@ -75,114 +89,97 @@ Dos desviaciones conscientes respecto del template:
 ```bash
 ./mvnw spring-boot:run
 # luego abrir http://localhost:8080/
+# consola H2: http://localhost:8080/h2-console
 ```
 
 ## Endpoints
 
+### CRUD persistido en H2 (`/api/armas`)
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/` | Información del servicio y lista de endpoints |
+| POST | `/api/armas` | Crea un arma persistida. Body: `{"tipo":"rifle","nombre":"AK-47","precio":2700,"danio":36,"cargador":30,"reserva":90"}`. Devuelve `201` con `id`. |
+| GET | `/api/armas` | Lista todo lo persistido (lee desde el repositorio). Filtro opcional: `?nombre=ak` |
+| GET | `/api/armas/{id}` | Lee uno. Si no existe → `404` |
+| PUT | `/api/armas/{id}` | Reemplaza datos editables (`nombre`, `precio`, `danio`). No cambia el `tipo` persistido (`409` si se intenta). |
+| DELETE | `/api/armas/{id}` | Elimina la fila. Responde `204`. Si no existe → `404` |
+| POST | `/api/armas/{id}/disparar?distancia=10` | Simulación que modifica el estado persistido (balas/cooldown). |
+| POST | `/api/armas/{id}/recargar` | Recarga si hay munición de reserva. |
+| GET | `/api/armas/equipables` | Usa la **interfaz `Equipable`**: lista `Rifle` y `GranadaHumo` leídos desde H2. |
+
+### Catálogo en memoria (POO-06)
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/` | Información del servicio, tipos, endpoints y cantidad persistida |
 | GET | `/armas/{tipo}` | Construye un arma con parámetros de la URL y la muestra en la tienda |
-| GET | `/armas/{tipo}/disparar?veces=3` | Construye el arma y dispara N veces; sin `distancia` usa 10 m |
+| GET | `/armas/{tipo}/disparar?veces=3` | Construye el arma y dispara N veces; sin `distancia` usa la sobrecarga |
 | GET | `/inventario` | Tienda con un arma de cada tipo |
-| GET | `/inventario/disparar?distancia=5&veces=2` | Cada arma del inventario dispara; muestra el comportamiento de cada una |
+| GET | `/inventario/disparar?distancia=5&veces=2` | Cada arma del inventario dispara (polimorfismo) |
 
 Tipos válidos: `pistola`, `subfusil`, `rifle`, `escopeta`, `francotirador`, `humo`, `flash`, `incendiaria`.
 
-Parámetros opcionales de construcción: `nombre`, `precio`, `danio`, `cargador`, `reserva`
-(`cargador` y `reserva` van juntos).
-
 ```bash
-curl "http://localhost:8080/armas/rifle?nombre=M4A4&precio=3100&danio=33"
-curl "http://localhost:8080/armas/escopeta/disparar?distancia=4&veces=9"
-curl "http://localhost:8080/inventario/disparar?distancia=5&veces=2"
-curl "http://localhost:8080/armas/pistola?precio=-5"   # 400: El precio no puede ser negativo
+# CRUD
+curl -X POST http://localhost:8080/api/armas -H 'Content-Type: application/json' -d '{"tipo":"rifle","nombre":"AK-47","precio":2700,"danio":36}'
+curl http://localhost:8080/api/armas
+curl http://localhost:8080/api/armas/1
+curl -X PUT http://localhost:8080/api/armas/1 -H 'Content-Type: application/json' -d '{"tipo":"rifle","nombre":"AK-47 Redline","precio":3000,"danio":40}'
+curl -X DELETE http://localhost:8080/api/armas/1
+curl http://localhost:8080/api/armas/equipables
+
+# Errores
+curl -X POST http://localhost:8080/api/armas -H 'Content-Type: application/json' -d '{"tipo":"rifle","nombre":"AK","precio":-5,"danio":36}'
+curl http://localhost:8080/api/armas/999999
 ```
 
-## Sobrecarga y sobreescritura
+## Jerarquía, herencia, sobrecarga y sobreescritura
 
-Son los dos mecanismos que pide el enunciado. No son lo mismo y en el código se distinguen así:
+### Herencia persistida
+- **Clase base persistible**: `Arma` es `@Entity` con `@Inheritance(strategy = InheritanceType.SINGLE_TABLE)`, `@DiscriminatorColumn(name = "tipo_arma", discriminatorType = DiscriminatorType.STRING)`. Tiene constructor sin argumentos para JPA (con visibilidad `protected`) y **constructores de negocio** que validan invariantes.
+- **Dos clases hijas independientes**: `ArmaDeFuego` y `Granada` extienden `Arma`. Cada una agrega `@Entity` + `@DiscriminatorValue`.
+- **Cinco hijas de `ArmaDeFuego`**: `Pistola`, `Subfusil`, `Rifle`, `Escopeta`, `Francotirador`. **Tres hijas de `Granada`**: `GranadaHumo`, `GranadaFlash`, `GranadaIncendiaria` (más `GranadaSenal` agregada por el compañero). El discriminador permite distinguir el subtipo en la tabla y en el polimorfismo.
+- **Método abstracto sigue existiendo**: `Arma` declara `getTipo()`, `getEstado()`, `recargar()`, `describirEfecto(double)`, `detalleTienda()`, `motivoBloqueo()`, `consumirUso()`, `calcularDanio(double)`. Las hijas lo **sobreescriben**.
 
-- **Sobreescritura**: la clase hija cambia la implementación de un método que ya existía en el padre.
-  La firma es idéntica y el método del padre es `abstract`. Ocurre entre clases distintas.
-- **Sobrecarga**: en la **misma clase** se repite el nombre con otra lista de argumentos. Conviven
-  las dos versiones y el compilador elige según lo que se pase. No hay herencia de por medio.
+### Protocolo de dominio (POO-07)
+`Equipable` es una **interfaz** con `ranura()` y `mensajeDeEquipado()`. `Rifle` y `GranadaHumo` la implementan. El endpoint `GET /api/armas/equipables` trabaja con `List<Equipable>` y devuelve mensajes desde la interfaz (polimorfismo entre familias distintas).
 
-### Sobreescritura: la pone cada hija
+### Repositorio y desacoplamiento
+`ArmaRepository` extiende `JpaRepository<Arma, Long>`. Es una **interfaz**: Spring genera la implementación. `ArmaServiceImpl` depende de la interfaz del repositorio; el controller depende del servicio. El controller traduce HTTP, el repositorio traduce filas, las reglas viven en el dominio.
 
-`Arma` declara los métodos abstractos que el padre no puede resolver porque cada tipo de arma responde
-distinto: `getTipo()`, `getEstado()`, `recargar()`, `describirEfecto(double)`, `detalleTienda()`,
-`motivoBloqueo()`, `consumirUso()` y `calcularDanio(double)`. `ArmaDeFuego` implementa los últimos
-dejándolos `final` y agrega el abstracto `factorDistancia(double)`, que es lo único que cambia entre
-armas de fuego. Cada hija lo **sobreescribe** con su propia caída de daño:
+### Sobrecarga
+- `Arma.disparar()` sobrecarga a `Arma.disparar(double)` (delegación, usa `DISTANCIA_POR_DEFECTO=10`)
+- `Inventario.dispararTodas()` sobrecarga a `Inventario.dispararTodas(double)`
+- Constructores: armas de fuego/granadas tienen **constructor simple** y **constructor sobrecargado**; el simple delega con `this(...)` al sobrecargado y este llama a `super(...)`. `ArmaServiceImpl` usa el constructor simple cuando no se pasa munición/cantidad, y el sobrecargado cuando se pasan.
 
-| Clase | Método sobreescrito | Implementación propia |
-|---|---|---|
-| `Pistola` | `factorDistancia(double)` | `max(0.5, 1 - d/100)` |
-| `Subfusil` | `factorDistancia(double)` | `max(0.3, 1 - d/40)` |
-| `Rifle` | `factorDistancia(double)` | `max(0.7, 1 - d/200)` |
-| `Escopeta` | `factorDistancia(double)` | perdigones que llegan a la distancia |
-| `Francotirador` | `factorDistancia(double)` | `1.0`, no pierde daño |
-| `GranadaHumo` / `Flash` / `Incendiaria` | `describirEfecto(double)` | el texto de cada granada |
+### Sobreescritura
+`ArmaDeFuego.factorDistancia(double)` es abstracto; cada hija lo implementa con su propia caída de daño. `Escopeta` redefine `describirEfecto`, `Francotirador` deja daño completo, granadas redefinen `describirEfecto`. `Inventario` usa `List<Arma>` sin `if` ni `instanceof`.
 
-`Inventario` guarda `List<Arma>` y usa todas igual: el JSON que sale en `/inventario/disparar` es el
-de cada clase hija sin un solo `if` por tipo.
-
-### Sobrecarga: mismo nombre, otra lista de argumentos
-
-Se agregó en tres lugares, siempre en la misma clase:
-
-| Clase | Versión simple | Versión sobrecargada |
-|---|---|---|
-| `Arma` | `disparar()` — usa `DISTANCIA_POR_DEFECTO` (10 m) | `disparar(double distancia)` |
-| `Inventario` | `dispararTodas()` | `dispararTodas(double distancia)` |
-| `Pistola`, `Subfusil`, `Rifle`, `Escopeta`, `Francotirador` | 3 argumentos: nombre, precio, daño | 5 argumentos: además cargador y reserva |
-| `GranadaFlash`, `GranadaHumo` | nombre y precio | nombre, precio y cantidad |
-| `GranadaIncendiaria` | nombre, precio y daño | nombre, precio, daño y cantidad |
-
-Las dos versiones de los mensajes no duplican el algoritmo: la sobrecarga **delega** en la otra
-(`disparar()` llama a `disparar(DISTANCIA_POR_DEFECTO)`), así el flujo sigue Viviendo en un solo
-lugar. En los constructores pasa igual: el simple completa lo que falta y llama al sobrecargado
-con `this(...)`, y ese es el que termina llamando a `super(...)`. **Cada firma deja el arma en un
-estado legal**, porque la validación vive en los constructores de la jerarquía.
-
-### Se ve en la API
-
-`distancia` ahora es opcional: si no viene en la URL entra la sobrecarga.
-
-```bash
-# sobrecarga: dispara sin indicar distancia (10 m)
-curl "http://localhost:8080/armas/rifle/disparar?veces=2"
-
-# versión con distancia
-curl "http://localhost:8080/armas/rifle/disparar?distancia=60&veces=2"
-
-# las dos variantes en el inventario, una clase hija por fila
-curl "http://localhost:8080/inventario/disparar?veces=1"
-curl "http://localhost:8080/inventario/disparar?distancia=60&veces=1"
+## Jerarquía de excepciones y handler por tipo
 ```
-
-Los constructores también se ven desde la URL: `cargador` y `reserva` son opcionales, y si no
-mandan ninguno se usa el constructor simple del arma.
-
-```bash
-curl "http://localhost:8080/armas/pistola"                              # Glock-18, cargador 20/120
-curl "http://localhost:8080/armas/pistola?cargador=5&reserva=10"         # constructor sobrecargado
-curl "http://localhost:8080/armas/pistola?cargador=5"                    # 400: van juntos o ninguno
+ApiException (abstracta)
+├── SolicitudInvalidaException  (400)
+│   └── TipoNoSoportadoException (400)
+├── RecursoNoEncontradoException (404)
+└── ConflictoDeEstadoException   (409)
 ```
+`ManejadorErrores` tiene `@ExceptionHandler` por cada tipo (`@RestControllerAdvice`). También traduce `IllegalArgumentException` a `400`. Los constructores del dominio validan y lanzan `IllegalArgumentException`; el handler los mapea a `400` para mostrar que la regla se rompe antes de persistir.
 
-Las granadas salen de la URL con su constructor simple: la cantidad de granadas no es un dato que
-se mande por la URL, así que la versión sobrecargada se ejercita desde las pruebas.
+## Colección Insomnia
+Se incluye `insomnia/CS2-CRUD-Insomnia.json` con:
+- Entorno con `base_url = http://localhost:8080`
+- Peticiones para cada verbo CRUD
+- Casos de error: `POST` con precio negativo, tipo desconocido, cargador incompleto; `GET/DELETE` con id inexistente
+- Petición que usa la interfaz `Equipable` (`GET /api/armas/equipables`)
+- Peticiones del catálogo POO-06
 
-`SobrecargaSobreescrituraTests` cubre las dos firmas de cada clase y verifica que ninguna deje el
-arma en un estado imposible.
+**Orden de ejecución:** `GET /` → `POST /api/armas` (guardar `id`) → `GET /api/armas` → `GET /api/armas/{id}` → `PUT /api/armas/{id}` → `POST /api/armas/{id}/disparar` → `GET /api/armas/equipables` → `DELETE /api/armas/{id}`. Probar también los errores.
 
 ## Diagrama de clases
 
 ```mermaid
 classDiagram
     class Arma {
-        <<abstract>>
+        <<Entity abstract>>
+        -Long id
         -String nombre
         -int precio
         -int danioBase
@@ -190,6 +187,7 @@ classDiagram
         +disparar() ResultadoDisparo
         +disparar(double distancia) ResultadoDisparo
         +mostrarEnTienda() FichaTienda
+        +actualizarDatos(String,int,int)
         +recargar()* String
         +getTipo()* String
         +getEstado()* String
@@ -201,10 +199,10 @@ classDiagram
     }
 
     class ArmaDeFuego {
-        <<abstract>>
-        -int capacidadCargador
-        -int balasEnCargador
-        -int reserva
+        <<Entity abstract>>
+        -Integer capacidadCargador
+        -Integer balasEnCargador
+        -Integer reserva
         #ArmaDeFuego(String,int,int)
         #ArmaDeFuego(String,int,int,int,int)
         +recargar() String
@@ -214,86 +212,37 @@ classDiagram
     }
 
     class Granada {
-        <<abstract>>
-        -long cooldownMs
-        -double radio
-        -int cantidad
+        <<Entity abstract>>
+        -Long cooldownMs
+        -Double radio
+        -Integer cantidad
         -long ultimoLanzamientoMs
         +recargar() String
         +getEstado() String
         #calcularDanio(double distancia) int
-        -cooldownRestanteMs() long
     }
 
-    class Pistola {
-        +Pistola(String,int,int)
-        +Pistola(String,int,int,int,int)
-        #factorDistancia(double) double
-    }
-    class Subfusil {
-        +Subfusil(String,int,int)
-        +Subfusil(String,int,int,int,int)
-        #factorDistancia(double) double
-    }
-    class Rifle {
-        +Rifle(String,int,int)
-        +Rifle(String,int,int,int,int)
-        #factorDistancia(double) double
-    }
-    class Escopeta {
-        +Escopeta(String,int,int)
-        +Escopeta(String,int,int,int,int)
-        -int PERDIGONES$
-        #factorDistancia(double) double
-        #describirEfecto(double) String
-    }
-    class Francotirador {
-        +Francotirador(String,int,int)
-        +Francotirador(String,int,int,int,int)
-        #factorDistancia(double) double
-        #describirEfecto(double) String
-    }
-    class GranadaHumo {
-        +GranadaHumo(String,int)
-        +GranadaHumo(String,int,int)
-        #describirEfecto(double) String
-    }
-    class GranadaFlash {
-        +GranadaFlash(String,int)
-        +GranadaFlash(String,int,int)
-        #describirEfecto(double) String
-    }
-    class GranadaIncendiaria {
-        +GranadaIncendiaria(String,int,int)
-        +GranadaIncendiaria(String,int,int,int,int)
-        #describirEfecto(double) String
+    class Equipable {
+        <<interface>>
+        +ranura() String
+        +mensajeDeEquipado() String
     }
 
-    class Inventario {
-        -List~Arma~ armas
-        +agregar(Arma)
-        +dispararTodas() List~ResultadoDisparo~
-        +dispararTodas(double) List~ResultadoDisparo~
-        +recargarTodas() List~String~
-        +tienda() List~FichaTienda~
-    }
+    class Pistola { +Pistola(String,int,int); +Pistola(String,int,int,int,int) }
+    class Subfusil { +Subfusil(String,int,int); +Subfusil(String,int,int,int,int) }
+    class Rifle { +Rifle(String,int,int); +Rifle(String,int,int,int,int) }
+    class Escopeta { +Escopeta(String,int,int); +Escopeta(String,int,int,int,int) }
+    class Francotirador { +Francotirador(String,int,int); +Francotirador(String,int,int,int,int) }
+    class GranadaHumo { +GranadaHumo(String,int); +GranadaHumo(String,int,int) }
+    class GranadaFlash { +GranadaFlash(String,int); +GranadaFlash(String,int,int) }
+    class GranadaIncendiaria { +GranadaIncendiaria(String,int,int); +GranadaIncendiaria(String,int,int,int,int) }
+    class GranadaSenal { +GranadaSenal(String,int); +GranadaSenal(String,int,int) }
 
-    class FichaTienda {
-        +String nombre
-        +String tipo
-        +int precio
-        +int danioBase
-        +String detalle
-    }
-
-    class ResultadoDisparo {
-        +String arma
-        +String tipo
-        +boolean exito
-        +int danio
-        +String efecto
-        +String estado
-    }
+    class Inventario { -List~Arma~ armas; +agregar(Arma); +dispararTodas(); +dispararTodas(double); +tienda() }
+    class ArmaRepository { <<interface>> +findAll(); +findById(Long); +save(Arma); +delete(Arma) }
+    class ArmaServiceImpl { }
+    class ArmaCrudController { }
+    class ManejadorErrores { +noEncontrado(); +solicitudInvalida(); +conflictoDeEstado() }
 
     Arma <|-- ArmaDeFuego
     Arma <|-- Granada
@@ -305,21 +254,32 @@ classDiagram
     Granada <|-- GranadaHumo
     Granada <|-- GranadaFlash
     Granada <|-- GranadaIncendiaria
+    Granada <|-- GranadaSenal
+    Rifle ..|> Equipable
+    GranadaHumo ..|> Equipable
     Inventario o-- "*" Arma
-    Arma ..> FichaTienda : crea
-    Arma ..> ResultadoDisparo : crea
-    Inventario ..> ResultadoDisparo
-    Inventario ..> FichaTienda
+    ArmaRepository ..> Arma : gestiona
+    ArmaServiceImpl ..> ArmaRepository : usa (interfaz)
+    ArmaCrudController ..> ArmaServiceImpl : usa
 ```
+
+**Diferencia entre relaciones:** `extends` = herencia; `..|>` = implementación de interfaz; `..>` / `o--` = uso/composición. `ArmaRepository` es interfaz (Spring Data genera la implementación).
 
 ## Decisiones de diseño
 
-- **Ocultamiento:** todos los atributos son `private` (ninguno `protected` ni `public`) y no hay setters.
-  Los constructores validan, así que no se puede crear un arma en un estado imposible.
-- **Template Method:** `disparar()` es `final` en `Arma`. El flujo (validar → verificar bloqueo → consumir → calcular daño)
-  es el mismo para todas; las hijas completan los pasos abstractos.
-- **Generalización:** la munición vive una sola vez en `ArmaDeFuego` y el cooldown una sola vez en `Granada`.
-  Las armas concretas solo redefinen lo que realmente cambia (caída de daño, efecto).
-- **Polimorfismo:** `Inventario` guarda `List<Arma>` y dispara, recarga o muestra en la tienda sin `if` ni `instanceof`.
-- **Fábrica:** `ArmaServiceImpl` es el único lugar donde se decide el tipo concreto. Los controllers piden
-  un arma por nombre de tipo y reciben siempre el tipo padre `Arma`, nunca una clase concreta.
+- **Ocultamiento:** atributos `private`. `Arma` tiene validación en constructores y `@PrePersist/@PreUpdate`. Constructor vacío `protected` para JPA.
+- **Template Method:** `disparar()` es `final` en `Arma`. Flujo (validar → bloqueo → consumir → daño) común; hijas completan pasos.
+- **Herencia + tablas:** `SINGLE_TABLE` con discriminador `tipo_arma` (una tabla `armas`, subtipos por discriminador).
+- **Protocolo:** `Equipable` permite tratar armas/granadas equipables polimórficamente.
+- **Repositorios:** Spring Data `JpaRepository` como interfaz; sin implementar `CRUD` a mano.
+- **Excepciones:** jerarquía propia + handler por tipo → códigos HTTP correctos.
+- **Fábrica:** `ArmaServiceImpl` único lugar para elegir tipo concreto.
+- **Polimorfismo:** `Inventario` y `ArmaCrudController` trabajan con `Arma` sin `if`/`instanceof` en lógica de negocio.
+
+## Pruebas
+
+```bash
+./mvnw test
+```
+
+**Resultado:** `BUILD SUCCESS` con **21 tests** (1 `Tp2026ApplicationTests` + 11 `SobrecargaSobreescrituraTests` + 9 `GranadaSenalTest` + 5 `ArmaCrudIntegrationTest`).

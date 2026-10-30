@@ -1,6 +1,15 @@
 package py.edu.uc.lp3.domain;
 
-public final class Francotirador extends ArmaDeFuego {
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("francotirador")
+public class Francotirador extends ArmaDeFuego {
+
+    /** Constructor vacío para JPA. */
+    protected Francotirador() {
+    }
 
     /** Constructor simple: el francotirador con su cargador y reserva de fábrica. */
     public Francotirador(String nombre, int precio, int danioBase) {

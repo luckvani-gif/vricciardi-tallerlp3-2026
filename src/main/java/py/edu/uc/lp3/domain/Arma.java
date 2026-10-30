@@ -2,6 +2,19 @@ package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
 /**
  * Contrato común de todas las armas de CS2.
  *
@@ -9,17 +22,43 @@ import java.util.Optional;
  *   con precio negativo o nombre vacío.
  * - disparar() y mostrarEnTienda() son final: el ALGORITMO es el mismo para
  *   todas (Template Method); las hijas solo completan los pasos abstractos.
+ * - La familia se persiste en una sola tabla (SINGLE_TABLE) con un
+ *   discriminador; JPA usa el constructor vacío y valida antes de guardar.
  */
+@Entity
+@Table(name = "armas")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_arma", discriminatorType = DiscriminatorType.STRING)
 public abstract class Arma {
 
     /** Distancia que se usa cuando se dispara sin indicar ninguna. */
     public static final double DISTANCIA_POR_DEFECTO = 10;
 
-    private final String nombre;
-    private final int precio;
-    private final int danioBase;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    @Column(nullable = false)
+    private int precio;
+
+    @Column(nullable = false)
+    private int danioBase;
+
+    /** Constructor vacío para JPA. No es público: el dominio se crea con los constructores de negocio. */
+    protected Arma() {
+    }
 
     protected Arma(String nombre, int precio, int danioBase) {
+        validarDatos(nombre, precio, danioBase);
+        this.nombre = nombre;
+        this.precio = precio;
+        this.danioBase = danioBase;
+    }
+
+    private static void validarDatos(String nombre, int precio, int danioBase) {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre del arma es obligatorio");
         }
@@ -29,6 +68,21 @@ public abstract class Arma {
         if (danioBase < 0) {
             throw new IllegalArgumentException("El daño base no puede ser negativo");
         }
+    }
+
+    /**
+     * Regla de ocultamiento: una fila no se guarda si el objeto quedó en un
+     * estado imposible, aunque alguien intente saltear los constructores.
+     */
+    @PrePersist
+    @PreUpdate
+    private void validarAntesDeGuardar() {
+        validarDatos(nombre, precio, danioBase);
+    }
+
+    /** PUT reemplaza solo los datos editables; el id y la munición no se tocan. */
+    public final void actualizarDatos(String nombre, int precio, int danioBase) {
+        validarDatos(nombre, precio, danioBase);
         this.nombre = nombre;
         this.precio = precio;
         this.danioBase = danioBase;
@@ -81,15 +135,19 @@ public abstract class Arma {
     protected abstract String detalleTienda();
 
     // ---- Getters de solo lectura (no hay setters) ----
-    public final String getNombre() {
+    public Long getId() {
+        return id;
+    }
+
+    public String getNombre() {
         return nombre;
     }
 
-    public final int getPrecio() {
+    public int getPrecio() {
         return precio;
     }
 
-    public final int getDanioBase() {
+    public int getDanioBase() {
         return danioBase;
     }
 }
