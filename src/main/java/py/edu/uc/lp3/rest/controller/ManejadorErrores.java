@@ -1,7 +1,5 @@
 package py.edu.uc.lp3.rest.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,64 +17,77 @@ import py.edu.uc.lp3.exceptions.ViolacionReglaException;
 /**
  * Jerarquía de excepciones con un handler HTTP por tipo.
  * Base ApiException con dos hijas: ViolacionReglaException y AccesoRecursoException.
+ *
+ * Cada respuesta incluye "tipo" (la clase concreta de la excepción) y "codigo"
+ * (el estado HTTP). Así el cliente distingue a las hermanas aunque el mensaje
+ * cambie, tal como pide la colección de Insomnia.
  */
 @RestControllerAdvice
 public class ManejadorErrores {
 
-    /** Hija 2: recursos no encontrados -> 404 */
+    /** Cuerpo único de error: tipo de excepción, código HTTP y mensaje del dominio. */
+    public record ErrorResponse(String tipo, int codigo, String error) {
+    }
+
+    private static ErrorResponse cuerpo(ApiException e, int codigo) {
+        return new ErrorResponse(e.getClass().getSimpleName(), codigo, e.getMessage());
+    }
+
+    /** Hija 2: acceso a un recurso persistido que no existe -> 404 */
     @ExceptionHandler(AccesoRecursoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> accesoRecurso(AccesoRecursoException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse accesoRecurso(AccesoRecursoException e) {
+        return cuerpo(e, HttpStatus.NOT_FOUND.value());
     }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> noEncontrado(RecursoNoEncontradoException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse noEncontrado(RecursoNoEncontradoException e) {
+        return cuerpo(e, HttpStatus.NOT_FOUND.value());
     }
 
-    /** Hija 1: violaciones de regla -> 400/409 */
+    /** Hija 1: violación de regla de negocio/validación -> 400 */
     @ExceptionHandler(ViolacionReglaException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> violacionRegla(ViolacionReglaException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse violacionRegla(ViolacionReglaException e) {
+        return cuerpo(e, HttpStatus.BAD_REQUEST.value());
     }
 
     @ExceptionHandler(TipoNoSoportadoException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> tipoNoSoportado(TipoNoSoportadoException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse tipoNoSoportado(TipoNoSoportadoException e) {
+        return cuerpo(e, HttpStatus.BAD_REQUEST.value());
     }
 
     @ExceptionHandler(SolicitudInvalidaException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> solicitudInvalida(SolicitudInvalidaException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse solicitudInvalida(SolicitudInvalidaException e) {
+        return cuerpo(e, HttpStatus.BAD_REQUEST.value());
     }
 
     @ExceptionHandler(ConflictoDeEstadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> conflictoDeEstado(ConflictoDeEstadoException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse conflictoDeEstado(ConflictoDeEstadoException e) {
+        return cuerpo(e, HttpStatus.CONFLICT.value());
     }
 
     /** Red de seguridad: los constructores del dominio siguen lanzando IllegalArgumentException. */
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> datosInvalidos(IllegalArgumentException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse datosInvalidos(IllegalArgumentException e) {
+        return new ErrorResponse(e.getClass().getSimpleName(), HttpStatus.BAD_REQUEST.value(), e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> parametroConTipoIncorrecto(MethodArgumentTypeMismatchException e) {
-        return Map.of("error", "El parametro '" + e.getName() + "' tiene un tipo invalido");
+    public ErrorResponse parametroConTipoIncorrecto(MethodArgumentTypeMismatchException e) {
+        return new ErrorResponse(e.getClass().getSimpleName(), HttpStatus.BAD_REQUEST.value(),
+                "El parametro '" + e.getName() + "' tiene un tipo invalido");
     }
 
     @ExceptionHandler(ApiException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> apiException(ApiException e) {
-        return Map.of("error", e.getMessage());
+    public ErrorResponse apiException(ApiException e) {
+        return cuerpo(e, HttpStatus.BAD_REQUEST.value());
     }
 }

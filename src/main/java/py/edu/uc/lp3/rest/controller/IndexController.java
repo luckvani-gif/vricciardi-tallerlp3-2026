@@ -34,6 +34,7 @@ public class IndexController {
 						"DELETE " + ApiPaths.ARMAS_CRUD + "/{id}",
 						"POST " + ApiPaths.ARMAS_CRUD + "/{id}/disparar?distancia=10",
 						"POST " + ApiPaths.ARMAS_CRUD + "/{id}/recargar",
+						"POST " + ApiPaths.ARMAS_CRUD + "/simular?fuegoId={id}&granadaId={id}",
 						"GET " + ApiPaths.ARMAS_CRUD + "/equipables",
 						"GET " + ApiPaths.ARMAS + "/{tipo}",
 						"GET " + ApiPaths.ARMAS + "/{tipo}/disparar?veces=3",

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import py.edu.uc.lp3.constants.TiposArma;
 import py.edu.uc.lp3.domain.Arma;
@@ -11,12 +12,15 @@ import py.edu.uc.lp3.domain.ArmaDeFuego;
 import py.edu.uc.lp3.domain.Equipable;
 import py.edu.uc.lp3.domain.Escopeta;
 import py.edu.uc.lp3.domain.Francotirador;
+import py.edu.uc.lp3.domain.Granada;
 import py.edu.uc.lp3.domain.GranadaFlash;
 import py.edu.uc.lp3.domain.GranadaHumo;
 import py.edu.uc.lp3.domain.GranadaIncendiaria;
+import py.edu.uc.lp3.domain.GranadaSenal;
 import py.edu.uc.lp3.domain.Pistola;
 import py.edu.uc.lp3.domain.ResultadoDisparo;
 import py.edu.uc.lp3.domain.ResultadoRecarga;
+import py.edu.uc.lp3.domain.ResultadoSimulacion;
 import py.edu.uc.lp3.domain.Rifle;
 import py.edu.uc.lp3.domain.Subfusil;
 import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
@@ -70,6 +74,7 @@ public class ArmaServiceImpl implements ArmaService {
 			case TiposArma.HUMO -> new GranadaHumo(o(nombre, "Humo"), o(precio, 300));
 			case TiposArma.FLASH -> new GranadaFlash(o(nombre, "Flashbang"), o(precio, 200));
 			case TiposArma.INCENDIARIA -> new GranadaIncendiaria(o(nombre, "Molotov"), o(precio, 400), o(danio, 40));
+			case TiposArma.SENAL -> new GranadaSenal(o(nombre, "Decoy"), o(precio, 50));
 			default -> throw new TipoNoSoportadoException("Tipo de arma desconocido: " + tipo);
 		};
 	}
@@ -97,6 +102,21 @@ public class ArmaServiceImpl implements ArmaService {
 			return listar();
 		}
 		return armaRepository.findByNombreContainingIgnoreCase(nombre);
+	}
+
+	@Override
+	public List<Arma> buscar(String nombre, Integer precioMax) {
+		boolean hayNombre = nombre != null && !nombre.isBlank();
+		if (hayNombre && precioMax != null) {
+			return armaRepository.findByNombreContainingIgnoreCaseAndPrecioLessThanEqual(nombre, precioMax);
+		}
+		if (hayNombre) {
+			return armaRepository.findByNombreContainingIgnoreCase(nombre);
+		}
+		if (precioMax != null) {
+			return armaRepository.findByPrecioLessThanEqual(precioMax);
+		}
+		return listar();
 	}
 
 	@Override
@@ -132,6 +152,7 @@ public class ArmaServiceImpl implements ArmaService {
 	 * y NO se persiste un estado ilegal. El cambio se guarda en H2.
 	 */
 	@Override
+	@Transactional
 	public ResultadoDisparo disparar(Long id, Double distancia) {
 		Arma arma = obtener(id);
 		ResultadoDisparo resultado = distancia == null ? arma.disparar() : arma.disparar(distancia);
@@ -143,30 +164,58 @@ public class ArmaServiceImpl implements ArmaService {
 	}
 
 	/**
-	 * REGLA DE NEGOCIO 2 (persistida): Recarga solo si hay reserva y el cargador
-	 * no está lleno. Las granadas no se recargan. Se valida el estado y se persiste.
+	 * REGLA DE NEGOCIO 2 (persistida): la validez de la recarga la decide el
+	 * dominio (ArmaDeFuego.recargar / Granada.recargar). El servicio solo persiste
+	 * el estado resultante; si la regla falla, la excepción viaja al handler.
 	 */
 	@Override
+	@Transactional
 	public ResultadoRecarga recargar(Long id) {
 		Arma arma = obtener(id);
-		if (!(arma instanceof ArmaDeFuego fuego)) {
-			throw new ConflictoDeEstadoException("Solo las armas de fuego se recargan");
+		String mensaje = arma.recargar();
+		armaRepository.save(arma);
+		return new ResultadoRecarga(arma.getId(), arma.getNombre(), mensaje, arma.getEstado());
+	}
+
+	/**
+	 * SIMULACIÓN PERSISTIDA (dos reglas juntas): involucra Arma (tipo padre),
+	 * ArmaDeFuego y Granada. Dispara el arma de fuego, la recarga y lanza la
+	 * granada. Es transaccional: si una regla falla, no queda un estado a medias.
+	 */
+	@Override
+	@Transactional
+	public ResultadoSimulacion simular(Long idArmaDeFuego, Long idGranada, Double distancia) {
+		Arma fuego = obtener(idArmaDeFuego);
+		if (!(fuego instanceof ArmaDeFuego)) {
+			throw new SolicitudInvalidaException("El id " + idArmaDeFuego + " no es un arma de fuego");
 		}
-		if (fuego.getReserva() == 0 && fuego.getBalasEnCargador() == fuego.getCapacidadCargador()) {
-			throw new ConflictoDeEstadoException("El cargador ya está lleno");
+		Arma granada = obtener(idGranada);
+		if (!(granada instanceof Granada)) {
+			throw new SolicitudInvalidaException("El id " + idGranada + " no es una granada");
 		}
-		if (fuego.getBalasEnCargador() < fuego.getCapacidadCargador() && fuego.getReserva() == 0) {
-			throw new ConflictoDeEstadoException("Sin munición de reserva");
+
+		ResultadoDisparo disparo = distancia == null ? fuego.disparar() : fuego.disparar(distancia);
+		if (!disparo.exito()) {
+			throw new ConflictoDeEstadoException(disparo.efecto());
 		}
-		if (fuego.getBalasEnCargador() >= fuego.getCapacidadCargador()) {
-			throw new ConflictoDeEstadoException("El cargador ya está lleno");
+		String recarga = fuego.recargar();
+
+		ResultadoDisparo lanzamiento = distancia == null ? granada.disparar() : granada.disparar(distancia);
+		if (!lanzamiento.exito()) {
+			throw new ConflictoDeEstadoException(lanzamiento.efecto());
 		}
-		if (fuego.getReserva() == 0) {
-			throw new ConflictoDeEstadoException("Sin munición de reserva");
-		}
-		String mensaje = fuego.recargar();
+
 		armaRepository.save(fuego);
-		return new ResultadoRecarga(fuego.getId(), fuego.getNombre(), mensaje, fuego.getEstado());
+		armaRepository.save(granada);
+
+		return new ResultadoSimulacion(
+				fuego.getId(),
+				disparo,
+				recarga,
+				fuego.getEstado(),
+				granada.getId(),
+				lanzamiento,
+				"Se disparó " + fuego.getNombre() + ", se recargó y se lanzó " + granada.getNombre());
 	}
 
 	@Override
@@ -208,6 +257,9 @@ public class ArmaServiceImpl implements ArmaService {
 		}
 		if (arma instanceof GranadaIncendiaria) {
 			return TiposArma.INCENDIARIA;
+		}
+		if (arma instanceof GranadaSenal) {
+			return TiposArma.SENAL;
 		}
 		return arma.getClass().getSimpleName().toLowerCase();
 	}

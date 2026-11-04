@@ -17,4 +17,6 @@ public interface ArmaRepository extends JpaRepository<Arma, Long> {
     List<Arma> findByNombreContainingIgnoreCase(String nombre);
 
     List<Arma> findByPrecioLessThanEqual(int precio);
+
+    List<Arma> findByNombreContainingIgnoreCaseAndPrecioLessThanEqual(String nombre, int precio);
 }

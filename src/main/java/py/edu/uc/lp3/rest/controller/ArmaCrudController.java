@@ -22,6 +22,7 @@ import py.edu.uc.lp3.domain.Arma;
 import py.edu.uc.lp3.domain.Equipable;
 import py.edu.uc.lp3.domain.ResultadoDisparo;
 import py.edu.uc.lp3.domain.ResultadoRecarga;
+import py.edu.uc.lp3.domain.ResultadoSimulacion;
 import py.edu.uc.lp3.rest.dto.ArmaRequest;
 import py.edu.uc.lp3.service.ArmaService;
 
@@ -46,8 +47,9 @@ public class ArmaCrudController {
     }
 
     @GetMapping
-    public List<Arma> listar(@RequestParam(required = false) String nombre) {
-        return armaService.buscarPorNombre(nombre);
+    public List<Arma> listar(@RequestParam(required = false) String nombre,
+                             @RequestParam(required = false) Integer precioMax) {
+        return armaService.buscar(nombre, precioMax);
     }
 
     @GetMapping("/equipables")
@@ -89,5 +91,12 @@ public class ArmaCrudController {
     @PostMapping("/{id}/recargar")
     public ResultadoRecarga recargar(@PathVariable Long id) {
         return armaService.recargar(id);
+    }
+
+    @PostMapping("/simular")
+    public ResultadoSimulacion simular(@RequestParam Long fuegoId,
+            @RequestParam Long granadaId,
+            @RequestParam(required = false) Double distancia) {
+        return armaService.simular(fuegoId, granadaId, distancia);
     }
 }
