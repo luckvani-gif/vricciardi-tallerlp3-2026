@@ -11,7 +11,7 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`bc85836`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/bc85836) — *POO-08: persistencia H2, CRUD, simulación, jerarquía de excepciones, interface, Insomnia* |
+| Commit de la solución | [`1164726`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/1164726) — *POO-08: persistencia H2, CRUD, simulación, jerarquía de excepciones, interface, Insomnia* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
