@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-10-30T17:00:00.000Z",
+  "__export_date": "2026-11-04T00:00:00.000Z",
   "__export_source": "vricciardi-tallerlp3-2026",
   "resources": [
     {
@@ -10,7 +10,9 @@
       "parentId": null,
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:8080"
+        "base_url": "http://localhost:8080",
+        "arma_id": "1",
+        "granada_id": "2"
       }
     },
     {
@@ -18,25 +20,25 @@
       "_type": "workspace",
       "parentId": null,
       "name": "Taller Git 2026 - CS2 CRUD POO-08",
-      "description": "CRUD sobre familia Arma/ArmaDeFuego/Granada. Tres clases persistidas, interface Equipable, jerarquia ApiException con dos hijas"
+      "description": "CRUD sobre Arma/ArmaDeFuego/Granada, interfaz Equipable, simulacion persistida de dos reglas y jerarquia ApiException con dos hijas."
     },
     {
       "_id": "grp_crud",
       "_type": "request_group",
       "parentId": "wrk_cs2",
-      "name": "CRUD /api/armas"
-    },
-    {
-      "_id": "grp_excepciones",
-      "_type": "request_group",
-      "parentId": "wrk_cs2",
-      "name": "Excepciones (una base + dos hijas)"
+      "name": "1. CRUD /api/armas"
     },
     {
       "_id": "grp_simulacion",
       "_type": "request_group",
       "parentId": "wrk_cs2",
-      "name": "Simulacion persistida (dos reglas)"
+      "name": "2. Simulacion persistida (dos reglas)"
+    },
+    {
+      "_id": "grp_excepciones",
+      "_type": "request_group",
+      "parentId": "wrk_cs2",
+      "name": "3. Excepciones (base + dos hijas)"
     },
     {
       "_id": "req_index",
@@ -52,12 +54,12 @@
       "_id": "req_post_rifle",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "POST /api/armas - Crear rifle (padre Arma + hija ArmaDeFuego)",
+      "name": "POST /api/armas - Crear rifle (Arma + ArmaDeFuego) y copiar id en arma_id",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 30,\n  \"reserva\": 90\n}"
+        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 5,\n  \"reserva\": 15\n}"
       },
       "headers": [{"name": "Content-Type", "value": "application/json"}]
     },
@@ -65,7 +67,7 @@
       "_id": "req_post_humo",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "POST /api/armas - Crear granada humo (hija Granada)",
+      "name": "POST /api/armas - Crear granada humo (hija Granada) y copiar id en granada_id",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
@@ -78,9 +80,29 @@
       "_id": "req_get_coleccion",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "GET /api/armas - Leer colección desde repositorio",
+      "name": "GET /api/armas - Leer coleccion desde repositorio",
       "method": "GET",
       "url": "{{ _.base_url }}/api/armas",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_get_filtro_nombre",
+      "_type": "request",
+      "parentId": "grp_crud",
+      "name": "GET /api/armas?nombre=AK - Consulta derivada del repositorio",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/armas?nombre=AK",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_get_filtro_precio",
+      "_type": "request",
+      "parentId": "grp_crud",
+      "name": "GET /api/armas?precioMax=500 - Consulta derivada del repositorio",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/armas?precioMax=500",
       "body": {},
       "headers": []
     },
@@ -90,7 +112,7 @@
       "parentId": "grp_crud",
       "name": "GET /api/armas/{id} - Leer uno",
       "method": "GET",
-      "url": "{{ _.base_url }}/api/armas/1",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
       "body": {},
       "headers": []
     },
@@ -98,24 +120,14 @@
       "_id": "req_put",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "PUT /api/armas/{id} - Actualizar",
+      "name": "PUT /api/armas/{id} - Actualizar y persistir",
       "method": "PUT",
-      "url": "{{ _.base_url }}/api/armas/1",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47 Redline\",\n  \"precio\": 3000,\n  \"danio\": 40\n}"
       },
       "headers": [{"name": "Content-Type", "value": "application/json"}]
-    },
-    {
-      "_id": "req_delete",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "DELETE /api/armas/{id} - Eliminar (204)",
-      "method": "DELETE",
-      "url": "{{ _.base_url }}/api/armas/1",
-      "body": {},
-      "headers": []
     },
     {
       "_id": "req_get_equipables",
@@ -128,10 +140,70 @@
       "headers": []
     },
     {
+      "_id": "req_delete",
+      "_type": "request",
+      "parentId": "grp_crud",
+      "name": "DELETE /api/armas/{id} - Eliminar (204). Ejecutar al final",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_simular",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "POST /api/armas/simular - Dispara, recarga y lanza granada (tres clases)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/simular?fuegoId={{ _.arma_id }}&granadaId={{ _.granada_id }}&distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_disparar",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "POST /api/armas/{id}/disparar - Regla 1: dano y consumo persistido",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}/disparar?distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_recargar",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "POST /api/armas/{id}/recargar - Regla 2: carga de municion persistida",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}/recargar",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_get_post_simulacion",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "GET /api/armas - Ver el estado persistido despues de simular",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_disparar_vacio",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "POST disparar sin balas - ConflictoDeEstadoException (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}/disparar?distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
       "_id": "req_post_precio_negativo",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "POST ilegal - Precio negativo (ViolacionReglaException -> 400)",
+      "name": "POST ilegal - Precio negativo (IllegalArgumentException -> 400)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
@@ -144,7 +216,7 @@
       "_id": "req_post_tipo_desconocido",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "POST ilegal - Tipo desconocido (ViolacionReglaException -> 400)",
+      "name": "POST ilegal - Tipo desconocido (TipoNoSoportadoException -> 400)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
@@ -157,7 +229,7 @@
       "_id": "req_post_cargador_incompleto",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "POST ilegal - Cargador sin reserva (ViolacionReglaException -> 400)",
+      "name": "POST ilegal - Cargador sin reserva (SolicitudInvalidaException -> 400)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
@@ -170,9 +242,9 @@
       "_id": "req_put_cambio_tipo",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "PUT ilegal - Cambio de tipo (ViolacionReglaException -> 409)",
+      "name": "PUT ilegal - Cambio de tipo (ConflictoDeEstadoException -> 409)",
       "method": "PUT",
-      "url": "{{ _.base_url }}/api/armas/1",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"humo\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36\n}"
@@ -180,10 +252,20 @@
       "headers": [{"name": "Content-Type", "value": "application/json"}]
     },
     {
+      "_id": "req_recargar_granada",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST recargar granada - ConflictoDeEstadoException (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.granada_id }}/recargar",
+      "body": {},
+      "headers": []
+    },
+    {
       "_id": "req_get_no_existe",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "GET id inexistente (AccesoRecursoException -> 404)",
+      "name": "GET id inexistente (RecursoNoEncontradoException -> 404)",
       "method": "GET",
       "url": "{{ _.base_url }}/api/armas/999999",
       "body": {},
@@ -193,39 +275,9 @@
       "_id": "req_delete_no_existe",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "DELETE id inexistente (AccesoRecursoException -> 404)",
+      "name": "DELETE id inexistente (RecursoNoEncontradoException -> 404)",
       "method": "DELETE",
       "url": "{{ _.base_url }}/api/armas/999999",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_post_disparar",
-      "_type": "request",
-      "parentId": "grp_simulacion",
-      "name": "POST /api/armas/{id}/disparar - Regla 1: daño/consumo persistido",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas/1/disparar?distancia=10",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_post_recargar",
-      "_type": "request",
-      "parentId": "grp_simulacion",
-      "name": "POST /api/armas/{id}/recargar - Regla 2: carga de munición persistida",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas/1/recargar",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_post_disparar_vacio",
-      "_type": "request",
-      "parentId": "grp_simulacion",
-      "name": "POST disparar sin balas (ViolacionReglaException -> 409)",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas/1/disparar?distancia=10",
       "body": {},
       "headers": []
     }
