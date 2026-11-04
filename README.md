@@ -11,15 +11,15 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`1164726`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/1164726) — *POO-08: persistencia H2, CRUD, simulación, jerarquía de excepciones, interface, Insomnia* |
+| Commit de la solución | [`d48866d97cb16ad6390f424c99e0f322aa1fdbb3`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/d48866d97cb16ad6390f424c99e0f322aa1fdbb3) — *fix: tipo JSON estable, excepciones de partida e Insomnia importable* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
 | Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
 | Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
 
-> El enlace apunta al commit que reúne el código y la documentación de esta entrega.
-> Para la corrección se usa el commit enlazado en Classroom.
+> El enlace apunta al commit funcional (código, excepciones e Insomnia) con su hash
+> completo. En Classroom se entrega el hash del commit final de documentación.
 
 ## Cómo arrancar
 
@@ -135,23 +135,25 @@ JSON de creación lo omite. El número de la URL es ese identificador persistido
 índice de una lista del controller.
 
 **Jackson y el subtipo:** al crear, `ArmaRequest` recibe un campo `tipo` (`rifle`,
-`humo`, …) que el servicio traduce a un constructor concreto. Al listar, el JSON
-incluye el resultado de `getTipo()` de cada hija. Se eligió un DTO con discriminador en
-lugar de `@JsonTypeInfo` porque así el JSON público no queda atado a nombres de clases
-Java ni al constructor vacío de JPA; el subtipo se decide en el dominio y el contrato
-HTTP queda estable.
+`humo`, …) que el servicio traduce a un constructor concreto. Al leer, el JSON devuelve
+`tipo` con ese mismo código estable y `nombreTipo` con el nombre legible de la hija
+(`Rifle`, `Granada de humo`, …). Así el `tipo` que devuelve un `GET` se puede copiar a un
+`PUT` sin provocar un 409. Se eligió un DTO con discriminador en lugar de `@JsonTypeInfo`
+porque así el JSON público no queda atado a nombres de clases Java ni al constructor
+vacío de JPA; el subtipo se decide en el dominio y el contrato HTTP queda estable.
 
 ## Dos reglas de negocio y simulación persistida
 
 - **Regla 1 — Daño y consumo de munición:** al disparar un arma de fuego se consume una
   bala del cargador y el daño depende de la distancia (`calcularDanio` polimórfico). Si
   el cargador está vacío, el dominio devuelve el disparo fallido y el servicio lanza
-  `ConflictoDeEstadoException` (409) sin guardar un estado ilegal. En una granada se
-  consume una unidad y se respeta el cooldown.
+  `CargadorVacioException`, `GranadaAgotadaException` o `GranadaEnCooldownException`
+  (todas 409) sin guardar un estado ilegal. En una granada se consume una unidad y se
+  respeta el cooldown.
 - **Regla 2 — Carga de munición con control de reserva:** `ArmaDeFuego.recargar()` solo
   completa lo que falta y descuenta de la reserva. Si el cargador está lleno o no hay
-  reserva, el **dominio** lanza `ConflictoDeEstadoException` (409). Las granadas no son
-  recargables y también lo decide el dominio.
+  reserva, el **dominio** lanza `CargadorLlenoException` o `SinReservaException` (409).
+  Las granadas no son recargables: el dominio lanza `GranadaNoRecargableException` (409).
 
 La simulación `POST /api/armas/simular` involucra las **tres clases**: recibe el id de un
 `ArmaDeFuego` y el id de una `Granada`, dispara, recarga y lanza la granada. Todo se
@@ -163,12 +165,22 @@ Un `GET /api/armas` posterior muestra el estado ya persistido.
 ```text
 ApiException (base, abstracta, RuntimeException)
 ├── ViolacionReglaException (hija 1)
-│   ├── SolicitudInvalidaException    -> 400
-│   ├── TipoNoSoportadoException      -> 400
-│   └── ConflictoDeEstadoException    -> 409
+│   ├── SolicitudInvalidaException      -> 400
+│   ├── TipoNoSoportadoException        -> 400
+│   └── ConflictoDePartidaException     -> 409
+│       ├── CargadorVacioException
+│       ├── CargadorLlenoException
+│       ├── SinReservaException
+│       ├── GranadaAgotadaException
+│       ├── GranadaEnCooldownException
+│       ├── GranadaNoRecargableException
+│       └── CambioDeTipoException
 └── AccesoRecursoException (hija 2)
-    └── RecursoNoEncontradoException  -> 404
+    └── RecursoNoEncontradoException    -> 404
 ```
+
+Las hojas de `ConflictoDePartidaException` heredan el 409 y el cuerpo conserva el nombre
+concreto de la regla del juego que falló.
 
 Se usan excepciones **no comprobadas** (`RuntimeException`): las reglas del dominio no
 obligan a llenar la firma de todos los métodos con `throws`, y el `@RestControllerAdvice`
@@ -179,10 +191,10 @@ traducción.
 `ManejadorErrores` tiene un `@ExceptionHandler` **por tipo**. La respuesta común es:
 
 ```json
-{ "tipo": "ConflictoDeEstadoException", "codigo": 409, "error": "El cargador ya está lleno" }
+{ "tipo": "CargadorLlenoException", "codigo": 409, "error": "El cargador ya está lleno" }
 ```
 
-Con `tipo` y `codigo`, el cliente distingue a las dos hermanas aunque el mensaje cambie.
+Con `tipo` y `codigo`, el cliente distingue la regla concreta aunque el mensaje cambie.
 Los constructores del dominio también lanzan `IllegalArgumentException`; el handler la
 traduce a **400** y la colección muestra ese caso.
 
@@ -192,8 +204,11 @@ Importar `insomnia/CS2-CRUD-Insomnia.json` (Insomnia → Import → From File). 
 `Base Environment` define:
 
 - `base_url`: `http://localhost:8080`
+- `tipo`: `rifle` (código que devuelve el GET y acepta el PUT)
 - `arma_id`: id del arma de fuego creada
 - `granada_id`: id de la granada creada
+- `arma_vacia_id`: id del rifle con cargador 1 y reserva 0
+- `arma_llena_id`: id del rifle con cargador lleno
 
 **Orden sugerido:**
 
@@ -204,12 +219,18 @@ Importar `insomnia/CS2-CRUD-Insomnia.json` (Insomnia → Import → From File). 
 5. `PUT /api/armas/{{ _.arma_id }}` — el campo cambia y sigue después de otro `GET`.
 6. `POST /api/armas/simular` — disparo + recarga + granada; luego `GET /api/armas`.
 7. `GET /api/armas/equipables` — endpoint de la interfaz.
-8. Probar los errores: precio negativo, tipo desconocido, cargador incompleto, cambio
-   de tipo, recargar granada, id inexistente. La colección **no** crece con basura.
+8. Probar los errores: precio negativo, tipo desconocido, cargador incompleto, preparar
+   un rifle sin reserva (gastar su única bala, disparar sin balas, recargar sin
+   reserva), preparar un rifle lleno (recargarlo), cambio de tipo, recargar granada,
+   granada agotada después de simular e id inexistente. La colección **no** crece con
+   basura.
 9. `DELETE /api/armas/{{ _.arma_id }}` — 204; el `GET` posterior es 404.
 
-La colección incluye un pedido por cada hija de la jerarquía de excepciones y un pedido
-por cada caso de negocio que el handler distingue.
+El export incluye `"scope": "collection"` en el workspace y el `Base Environment` cuelga
+de ese workspace, así Insomnia lo importa como colección y no como diseño. La colección
+incluye pedidos para las dos hijas de la jerarquía y para los conflictos de partida más
+representativos (cargador vacío, cargador lleno, sin reserva, granada agotada, granada no
+recargable y cambio de tipo).
 
 ## Diagrama Mermaid
 
@@ -226,7 +247,14 @@ classDiagram
     }
     class SolicitudInvalidaException
     class TipoNoSoportadoException
-    class ConflictoDeEstadoException
+    class ConflictoDePartidaException
+    class CargadorVacioException
+    class CargadorLlenoException
+    class SinReservaException
+    class GranadaAgotadaException
+    class GranadaEnCooldownException
+    class GranadaNoRecargableException
+    class CambioDeTipoException
     class RecursoNoEncontradoException
     class ManejadorErrores {
         <<@RestControllerAdvice>>
@@ -235,7 +263,7 @@ classDiagram
         +violacionRegla()
         +tipoNoSoportado()
         +solicitudInvalida()
-        +conflictoDeEstado()
+        +conflictoDePartida()
         +datosInvalidos()
     }
 
@@ -310,7 +338,14 @@ classDiagram
     ApiException <|-- AccesoRecursoException
     ViolacionReglaException <|-- SolicitudInvalidaException
     ViolacionReglaException <|-- TipoNoSoportadoException
-    ViolacionReglaException <|-- ConflictoDeEstadoException
+    ViolacionReglaException <|-- ConflictoDePartidaException
+    ConflictoDePartidaException <|-- CargadorVacioException
+    ConflictoDePartidaException <|-- CargadorLlenoException
+    ConflictoDePartidaException <|-- SinReservaException
+    ConflictoDePartidaException <|-- GranadaAgotadaException
+    ConflictoDePartidaException <|-- GranadaEnCooldownException
+    ConflictoDePartidaException <|-- GranadaNoRecargableException
+    ConflictoDePartidaException <|-- CambioDeTipoException
     AccesoRecursoException <|-- RecursoNoEncontradoException
     ManejadorErrores ..> ApiException : maneja por tipo
 
@@ -398,9 +433,12 @@ sobreescritura.
   `Granada`). El recurso HTTP es `POST /api/armas/simular`; un `GET /api/armas` posterior
   muestra el resultado persistido.
 - **Excepciones:** `ApiException` (base), `ViolacionReglaException` (regla incumplida) y
-  `AccesoRecursoException` (recurso inexistente). Un recurso inexistente y una regla
-  incumplida son tipos distintos (404 vs 400/409). El JSON de error lleva `tipo`,
-  `codigo` y `error`.
+  `AccesoRecursoException` (recurso inexistente). Dentro de las reglas,
+  `ConflictoDePartidaException` agrupa los estados de partida (409) con nombres del
+  juego: `CargadorVacioException`, `CargadorLlenoException`, `SinReservaException`,
+  `GranadaAgotadaException`, `GranadaEnCooldownException`,
+  `GranadaNoRecargableException` y `CambioDeTipoException`. El JSON de error lleva
+  `tipo`, `codigo` y `error`.
 - **¿Quién lanza la excepción?** El objeto del juego (`ArmaDeFuego.recargar`,
   `Granada.recargar`, `Arma.disparar` cuando corresponde), no el controller. El handler
   solo la traduce a HTTP.

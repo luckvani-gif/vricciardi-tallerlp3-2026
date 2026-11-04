@@ -6,6 +6,8 @@
 |---|---|
 | Asistente / agente | **OpenCode** (`opencode`, CLI) |
 | Modelo exacto del LLM | **`opencode/big-pickle`** |
+| Asistente / agente adicional | **Claude** |
+| Modelo exacto del LLM adicional | **`claude-opus-5-5`** |
 | Entorno | Local, repositorio `vricciardi-tallerlp3-2026` |
 | Cuándo | Octubre y noviembre de 2026 |
 
@@ -23,6 +25,8 @@
 6. «Actualizá README, ESPECIFICACIONES y BITACORA; que el diagrama Mermaid y las
    respuestas coincidan con el código.»
 7. «Ejecutá `./mvnw test` y corregí lo que falle.»
+8. «Revisá la entrega contra la rúbrica: corregí la importación de Insomnia, el enlace
+   del commit, el `tipo` del JSON y los nombres de las excepciones.»
 
 ## Uso concreto en este práctico
 
@@ -31,6 +35,12 @@
 - Se agregó la simulación `POST /api/armas/simular` con las tres clases.
 - Se ampliaron README/ESPECIFICACIONES con diagrama, respuestas y colección.
 - Se amplió la colección Insomnia con variables, simulación, filtros y excepciones.
+- Se corrigió la importación de Insomnia (`scope: collection` y entorno colgado del
+  workspace) y se agregaron pedidos deterministas para los conflictos de partida.
+- Se unificó el `tipo` del JSON con el código estable y se agregó `nombreTipo`; ahora el
+  `tipo` que devuelve el `GET` sirve para el `PUT`.
+- Se reemplazó la excepción genérica por reglas con nombre de CS2
+  (`CargadorVacioException`, `SinReservaException`, `CambioDeTipoException`, etc.).
 
 ## Sin IA
 
