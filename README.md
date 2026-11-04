@@ -1,7 +1,8 @@
-# Taller Git 2026 — Armas de Counter-Strike 2
+# Taller Git 2026 — Armas de Counter-Strike 2 (POO-08)
 
-Servicio HTTP (Spring Boot, API REST) que modela las armas de **Counter-Strike 2** con **persistencia en H2 + JPA**. 
-Guarda el estado (munición/cooldown) entre peticiones y simula reglas de juego persistidas.
+Servicio HTTP (Spring Boot, API REST) que modela las armas de **Counter-Strike 2** con
+**persistencia en H2 + JPA**. Guarda el estado (munición, reserva y granadas) entre
+peticiones y simula dos reglas de juego persistidas.
 
 Materia: Lenguajes de Programación 3 — Taller de Git + POO.
 Licencia: Apache License 2.0.
@@ -10,12 +11,15 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`3bc471c`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/3bc471ca3ed4687f52c7b9ad5dff7c8a9290ea40) — *POO-08: persistencia H2, CRUD, jerarquía de excepciones, interface, Insomnia* |
+| Commit de la solución | [`b43af94`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/b43af94) — *POO-08: persistencia H2, CRUD, jerarquía de excepciones, interface, Insomnia* |
 | Código | `src/main/java/py/edu/uc/lp3` |
-| Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`mvn test`) |
+| Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
 | Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
 | Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
+
+> El hash del commit se actualiza en la última entrega. Para la corrección se usa el
+> commit enlazado en Classroom; el código de este README es el de ese commit.
 
 ## Cómo arrancar
 
@@ -24,8 +28,12 @@ cd vricciardi-tallerlp3-2026
 ./mvnw spring-boot:run
 ```
 
-Servicio: `http://localhost:8080`  
+Servicio: `http://localhost:8080`
 Consola H2: `http://localhost:8080/h2-console`
+JDBC URL de la consola: `jdbc:h2:file:./data/cs2` — usuario `sa`, sin contraseña.
+
+Si el servicio ya usó el puerto 8080, se puede cambiar con
+`./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081`.
 
 ## Propiedades de H2 (explicadas)
 
@@ -33,88 +41,182 @@ Consola H2: `http://localhost:8080/h2-console`
 
 ```properties
 spring.application.name=vricciardi-tallerlp3-2026
-spring.datasource.url=jdbc:h2:file:./data/cs2        # Base en archivo: persiste entre reinicios
-spring.datasource.username=sa                       # Usuario por defecto de H2
-spring.datasource.password=                         # Sin contraseña en desarrollo
-spring.jpa.hibernate.ddl-auto=update               # Crea/actualiza esquema desde entidades JPA
-spring.jpa.open-in-view=false                      # Evita lazy loading fuera de transacción
-spring.h2.console.enabled=true                     # Habilita consola web
-spring.h2.console.path=/h2-console                 # Ruta de la consola
+spring.datasource.url=jdbc:h2:file:./data/cs2        # base en archivo: persiste entre reinicios
+spring.datasource.username=sa                       # usuario por defecto de H2
+spring.datasource.password=                         # sin contraseña en desarrollo
+spring.jpa.hibernate.ddl-auto=update                # crea/actualiza el esquema desde las entidades
+spring.jpa.open-in-view=false                       # el acceso a datos no queda abierto fuera del servicio
+spring.h2.console.enabled=true                      # habilita la consola web
+spring.h2.console.path=/h2-console                  # ruta de la consola
 ```
 
-En tests se usa `src/test/resources/application.properties` con `jdbc:h2:mem:lp3test` y `create-drop`.
+En tests se usa `src/test/resources/application.properties` con `jdbc:h2:mem:lp3test` y
+`create-drop`, así cada corrida empieza con la base limpia.
 
 ## Organización de paquetes
 
 ```
 py.edu.uc.lp3
-├── constants        # ApiPaths, TiposArma
-├── domain           # Entidades (Arma, ArmaDeFuego, Granada, hijas), Equipable (interface), records
-├── exceptions       # Jerarquía: ApiException -> ViolacionReglaException, AccesoRecursoException
-├── repository       # ArmaRepository (Spring Data JPA)
-├── rest/controller  # ArmaCrudController, ManejadorErrores, ArmaController, IndexController
-├── rest/dto         # ArmaRequest
-└── service/impl     # Lógica de negocio y persistencia
+├── Application.java          # arranque Spring Boot
+├── constants                 # ApiPaths, TiposArma
+├── domain                    # Arma, ArmaDeFuego, Granada, hijas, Equipable (interface), records
+├── exceptions                # ApiException -> ViolacionReglaException / AccesoRecursoException
+├── repository                # ArmaRepository (interfaz Spring Data JPA)
+├── rest/controller           # ArmaCrudController, ManejadorErrores, ArmaController, IndexController
+├── rest/dto                  # ArmaRequest
+└── service/impl              # ArmaServiceImpl, InventarioServiceImpl
 ```
 
-## Tres clases del modelado que participan (persistidas)
+El dominio no conoce HTTP. La entrada HTTP no arma munición ni decide reglas: traduce
+JSON a mensajes del dominio y delega en el servicio.
 
-Se persiste la **familia** con `@Inheritance(strategy = InheritanceType.SINGLE_TABLE)` y `@DiscriminatorColumn(name = "tipo_arma")`:
+## Tres clases del modelado (persistidas)
 
-1. **`Arma`** (clase base, `@Entity`, abstracta) — atributos comunes, `id` generado, validaciones, Template Method `disparar()`.
-2. **`ArmaDeFuego`** (hija 1, `@Entity`, abstracta) — generaliza munición (`capacidadCargador`, `balasEnCargador`, `reserva`). Implementa lógica final de recarga/consumo.
-3. **`Granada`** (hija 2, `@Entity`, abstracta) — generaliza granadas (`cooldownMs`, `radio`, `cantidad`, `ultimoLanzamientoMs`). Lógica de cooldown.
+Se persiste la familia con `@Inheritance(strategy = InheritanceType.SINGLE_TABLE)` y
+`@DiscriminatorColumn(name = "tipo_arma")`:
 
-Clases concretas: `Pistola`, `Subfusil`, `Rifle`, `Escopeta`, `Francotirador`, `GranadaHumo`, `GranadaFlash`, `GranadaIncendiaria`, `GranadaSenal`.
+1. **`Arma`** — clase base, `@Entity`, abstracta. Tiene `id` generado, nombre, precio,
+   daño y el Template Method `disparar()`.
+2. **`ArmaDeFuego`** — hija 1, abstracta. Generaliza cargador, balas y reserva; deja
+   final la lógica de consumo y recarga. Sus hijas concretas son `Pistola`, `Subfusil`,
+   `Rifle`, `Escopeta` y `Francotirador`.
+3. **`Granada`** — hija 2, abstracta. Generaliza cooldown, radio y cantidad. Sus hijas
+   concretas son `GranadaHumo`, `GranadaFlash`, `GranadaIncendiaria` y `GranadaSenal`.
 
-## Dos reglas de negocio que alimentan una simulación persistida
+Las dos ramas son independientes y cumplen «es un» respecto de `Arma`. El método
+abstracto de POO-06 sigue existiendo (`getTipo()`, `getEstado()`, `recargar()` y los
+pasos `motivoBloqueo()`, `consumirUso()`, `calcularDanio()`, `describirEfecto()`), y cada
+hija lo sobreescribe. Las hijas también ofrecen **constructor simple** y **constructor
+sobrecargado**; los dos dejan el objeto en un estado legal.
 
-- **Regla 1 — Control de munición por disparo (persistida):** Al disparar un arma de fuego se consume una bala del cargador. Si no hay balas, el disparo falla con `ConflictoDeEstadoException` (409) y **el estado NO se corrompe ni se guarda de forma ilegal**; el estado actual se persiste solo tras un disparo exitoso.
-- **Regla 2 — Carga de munición con control de reserva (persistida):** `POST /api/armas/{id}/recargar` recarga desde reserva solo si hay balas faltantes y hay reserva. Si el cargador está lleno o no hay reserva, lanza `ConflictoDeEstadoException` (409). Las granadas no son recargables. El resultado se persiste en H2.
+JPA exige un constructor sin argumentos. Se resolvió declarándolo `protected`: JPA lo
+usa para reconstruir la entidad, pero el resto del programa no puede crear un arma
+vacía y saltear las validaciones. Los constructores de negocio son los públicos.
 
-## Jerarquía de excepciones (base + dos hijas) con handler por tipo
+## Interfaz de dominio (POO-07)
 
-```text
-ApiException (base, abstracta)
-├── ViolacionReglaException (hija 1)  -> reglas/validación/tipo/cambio de tipo
-│   ├── SolicitudInvalidaException    -> 400
-│   ├── TipoNoSoportadoException      -> 400
-│   └── ConflictoDeEstadoException    -> 409
-└── AccesoRecursoException (hija 2)   -> acceso a recursos
-    └── RecursoNoEncontradoException  -> 404
+`py.edu.uc.lp3.domain.Equipable` declara `ranura()` y un mensaje por defecto
+`mensajeDeEquipado()`. La implementan **dos clases de familias distintas**: `Rifle`
+(`ArmaDeFuego`) y `GranadaHumo` (`Granada`). El endpoint `GET /api/armas/equipables`
+trabaja con `List<Equipable>`, lee desde el repositorio y muestra el mensaje de forma
+polimórfica.
+
+## Repositorio Spring Data
+
+`ArmaRepository extends JpaRepository<Arma, Long>` es una **interfaz**: Spring Data
+genera la implementación. Mensajes de consulta declarados (no implementados a mano):
+
+```java
+List<Arma> findByNombreContainingIgnoreCase(String nombre);
+List<Arma> findByPrecioLessThanEqual(int precio);
+List<Arma> findByNombreContainingIgnoreCaseAndPrecioLessThanEqual(String nombre, int precio);
 ```
 
-`ManejadorErrores` tiene `@ExceptionHandler` **por cada tipo** (`@RestControllerAdvice`). Los constructores del dominio también lanzan `IllegalArgumentException` y se traducen a `400`.
-
-## Interface de dominio (POO-07)
-
-`py.edu.uc.lp3.domain.Equipable` define `ranura()` y `mensajeDeEquipado()`. **Dos clases** lo implementan: `Rifle` y `GranadaHumo`. `GET /api/armas/equipables` trabaja con `List<Equipable>` leyendo desde el repositorio y muestra el mensaje polimórficamente.
+Se usan en `GET /api/armas?nombre=AK`, `GET /api/armas?precioMax=500` y en la
+combinación de ambos filtros.
 
 ## CRUD REST completo
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/api/armas` | Crear (usa discriminador `tipo`, delega a constructor simple/sobrecargado). **201** + `id`. |
-| GET | `/api/armas` | Listar todo desde `ArmaRepository`. |
+| POST | `/api/armas` | Crear desde JSON con discriminador `tipo`. **201** + `id`. |
+| GET | `/api/armas` | Listar lo persistido; filtros opcionales `nombre` y `precioMax`. |
 | GET | `/api/armas/{id}` | Obtener uno. **404** si no existe. |
-| PUT | `/api/armas/{id}` | Actualizar datos. **No permite cambiar tipo** → **409**. |
-| DELETE | `/api/armas/{id}` | Eliminar. **204**. **404** si no existe. |
-| POST | `/api/armas/{id}/disparar?distancia=10` | Simulación regla 1 (persistida). |
-| POST | `/api/armas/{id}/recargar` | Simulación regla 2 (persistida). |
-| GET | `/api/armas/equipables` | Endpoint de la **interface**. |
+| PUT | `/api/armas/{id}` | Actualizar nombre, precio y daño. No permite cambiar el tipo → **409**. |
+| DELETE | `/api/armas/{id}` | Borrado físico. **204**. **404** si no existe. |
+| POST | `/api/armas/{id}/disparar?distancia=10` | Regla 1: daño/consumo persistido. |
+| POST | `/api/armas/{id}/recargar` | Regla 2: carga de munición persistida. |
+| POST | `/api/armas/simular?fuegoId=1&granadaId=2&distancia=10` | Simulación con las tres clases. |
+| GET | `/api/armas/equipables` | Endpoint de la interfaz `Equipable`. |
+| GET | `/` | Servicio vivo y lista de endpoints. |
+
+**Identidad:** el `id` lo genera la base con `@GeneratedValue(strategy = IDENTITY)`; el
+JSON de creación lo omite. El número de la URL es ese identificador persistido, no un
+índice de una lista del controller.
+
+**Jackson y el subtipo:** al crear, `ArmaRequest` recibe un campo `tipo` (`rifle`,
+`humo`, …) que el servicio traduce a un constructor concreto. Al listar, el JSON
+incluye el resultado de `getTipo()` de cada hija. Se eligió un DTO con discriminador en
+lugar de `@JsonTypeInfo` porque así el JSON público no queda atado a nombres de clases
+Java ni al constructor vacío de JPA; el subtipo se decide en el dominio y el contrato
+HTTP queda estable.
+
+## Dos reglas de negocio y simulación persistida
+
+- **Regla 1 — Daño y consumo de munición:** al disparar un arma de fuego se consume una
+  bala del cargador y el daño depende de la distancia (`calcularDanio` polimórfico). Si
+  el cargador está vacío, el dominio devuelve el disparo fallido y el servicio lanza
+  `ConflictoDeEstadoException` (409) sin guardar un estado ilegal. En una granada se
+  consume una unidad y se respeta el cooldown.
+- **Regla 2 — Carga de munición con control de reserva:** `ArmaDeFuego.recargar()` solo
+  completa lo que falta y descuenta de la reserva. Si el cargador está lleno o no hay
+  reserva, el **dominio** lanza `ConflictoDeEstadoException` (409). Las granadas no son
+  recargables y también lo decide el dominio.
+
+La simulación `POST /api/armas/simular` involucra las **tres clases**: recibe el id de un
+`ArmaDeFuego` y el id de una `Granada`, dispara, recarga y lanza la granada. Todo se
+guarda en H2 en una sola transacción: si una regla falla, no queda un estado a medias.
+Un `GET /api/armas` posterior muestra el estado ya persistido.
+
+## Jerarquía de excepciones y handlers
+
+```text
+ApiException (base, abstracta, RuntimeException)
+├── ViolacionReglaException (hija 1)
+│   ├── SolicitudInvalidaException    -> 400
+│   ├── TipoNoSoportadoException      -> 400
+│   └── ConflictoDeEstadoException    -> 409
+└── AccesoRecursoException (hija 2)
+    └── RecursoNoEncontradoException  -> 404
+```
+
+Se usan excepciones **no comprobadas** (`RuntimeException`): las reglas del dominio no
+obligan a llenar la firma de todos los métodos con `throws`, y el `@RestControllerAdvice`
+las traduce a HTTP en un solo lugar. Se reserva una excepción comprobada para errores
+recuperables por el llamador; acá el llamador es HTTP, así que el handler es el punto de
+traducción.
+
+`ManejadorErrores` tiene un `@ExceptionHandler` **por tipo**. La respuesta común es:
+
+```json
+{ "tipo": "ConflictoDeEstadoException", "codigo": 409, "error": "El cargador ya está lleno" }
+```
+
+Con `tipo` y `codigo`, el cliente distingue a las dos hermanas aunque el mensaje cambie.
+Los constructores del dominio también lanzan `IllegalArgumentException`; el handler la
+traduce a **400** y la colección muestra ese caso.
 
 ## Colección de Insomnia
 
-Importar `insomnia/CS2-CRUD-Insomnia.json` en Insomnia. Incluye: entorno `base_url`, CRUD, **POST ilegal** (precio negativo / tipo desconocido / cargador incompleto), **PUT ilegal** (cambio de tipo), **id inexistente** (GET/DELETE), **endpoint de interface**, **simulación** y un pedido por cada excepción hija.
+Importar `insomnia/CS2-CRUD-Insomnia.json` (Insomnia → Import → From File). El entorno
+`Base Environment` define:
 
-**Orden sugerido:** `GET /` → `POST /api/armas` (guardar id) → `GET /api/armas` → `GET /api/armas/{id}` → `PUT /api/armas/{id}` → `POST /api/armas/{id}/disparar` → `POST /api/armas/{id}/recargar` → `GET /api/armas/equipables` → probar errores → `DELETE /api/armas/{id}`. Al reiniciar con H2 archivo, lo guardado persiste.
+- `base_url`: `http://localhost:8080`
+- `arma_id`: id del arma de fuego creada
+- `granada_id`: id de la granada creada
+
+**Orden sugerido:**
+
+1. `GET /` — el servicio está vivo.
+2. `POST /api/armas` (rifle) — 201; copiar el `id` en `arma_id`.
+3. `POST /api/armas` (humo) — 201; copiar el `id` en `granada_id`.
+4. `GET /api/armas` y `GET /api/armas/{{ _.arma_id }}` — el recurso aparece.
+5. `PUT /api/armas/{{ _.arma_id }}` — el campo cambia y sigue después de otro `GET`.
+6. `POST /api/armas/simular` — disparo + recarga + granada; luego `GET /api/armas`.
+7. `GET /api/armas/equipables` — endpoint de la interfaz.
+8. Probar los errores: precio negativo, tipo desconocido, cargador incompleto, cambio
+   de tipo, recargar granada, id inexistente. La colección **no** crece con basura.
+9. `DELETE /api/armas/{{ _.arma_id }}` — 204; el `GET` posterior es 404.
+
+La colección incluye un pedido por cada hija de la jerarquía de excepciones y un pedido
+por cada caso de negocio que el handler distingue.
 
 ## Diagrama Mermaid
 
 ```mermaid
 classDiagram
     class ApiException {
-        <<abstract>>
+        <<abstract RuntimeException>>
     }
     class ViolacionReglaException {
         <<hija 1>>
@@ -128,12 +230,13 @@ classDiagram
     class RecursoNoEncontradoException
     class ManejadorErrores {
         <<@RestControllerAdvice>>
-        +violacionRegla()
         +accesoRecurso()
+        +noEncontrado()
+        +violacionRegla()
         +tipoNoSoportado()
         +solicitudInvalida()
         +conflictoDeEstado()
-        +noEncontrado()
+        +datosInvalidos()
     }
 
     class Equipable {
@@ -150,18 +253,23 @@ classDiagram
         -int danioBase
         +disparar() ResultadoDisparo
         +disparar(double) ResultadoDisparo
+        +recargar() String
+        +esRecargable() boolean
+        +getTipo() String
     }
     class ArmaDeFuego {
         <<@Entity abstract>>
+        -Integer capacidadCargador
         -Integer balasEnCargador
         -Integer reserva
-        -Integer capacidadCargador
+        +recargar() String
     }
     class Granada {
         <<@Entity abstract>>
         -Long cooldownMs
         -Double radio
         -Integer cantidad
+        +recargar() String
     }
     class Pistola
     class Rifle
@@ -179,9 +287,24 @@ classDiagram
         +findById(Long)
         +save(Arma)
         +delete(Arma)
+        +findByNombreContainingIgnoreCase(String)
+        +findByPrecioLessThanEqual(int)
+        +findByNombreContainingIgnoreCaseAndPrecioLessThanEqual(String, int)
+    }
+    class ArmaService {
+        <<interface>>
+        +crear(...)
+        +buscar(...)
+        +disparar(...)
+        +recargar(...)
+        +simular(...)
+        +equipables()
     }
     class ArmaServiceImpl
     class ArmaCrudController
+    class ResultadoSimulacion {
+        <<record>>
+    }
 
     ApiException <|-- ViolacionReglaException
     ApiException <|-- AccesoRecursoException
@@ -206,23 +329,94 @@ classDiagram
     GranadaHumo ..|> Equipable
 
     ArmaRepository ..> Arma
+    ArmaService <|.. ArmaServiceImpl
     ArmaServiceImpl ..> ArmaRepository
-    ArmaCrudController ..> ArmaServiceImpl
+    ArmaCrudController ..> ArmaService
+    ArmaServiceImpl ..> ResultadoSimulacion
 ```
+
+**Cómo leer el diagrama:**
+
+- **Herencia:** flechas `Arma <|-- ArmaDeFuego` y `Arma <|-- Granada`; las concretas
+  heredan de esas dos ramas.
+- **Implementación de interfaz:** `Rifle ..|> Equipable` y `GranadaHumo ..|> Equipable`.
+- **Uso del repositorio:** `ArmaServiceImpl ..> ArmaRepository`; el controller no toca
+  la base.
+- **Jerarquía de excepciones:** `ApiException` con las dos hijas y las excepciones de
+  regla; `ManejadorErrores` las atiende por tipo.
+
+## Sobrecarga y sobreescritura (rúbrica)
+
+**Sobrecarga** — mismo nombre, distinta lista de argumentos:
+
+- Constructores simples y sobrecargados en `Pistola`, `Subfusil`, `Rifle`, `Escopeta`,
+  `Francotirador`, `GranadaHumo`, `GranadaFlash`, `GranadaIncendiaria` y `GranadaSenal`.
+- `Arma.disparar()` y `Arma.disparar(double)`.
+- `Inventario.dispararTodas()` y `Inventario.dispararTodas(double)`.
+
+**Sobreescritura** — misma firma, implementación propia en la hija:
+
+- `getTipo()`, `getEstado()`, `recargar()`, `motivoBloqueo()`, `consumirUso()`,
+  `calcularDanio()`, `describirEfecto()` y `detalleTienda()` en cada rama/hija.
+- `ranura()` y `mensajeDeEquipado()` en las clases que implementan `Equipable`.
 
 ## Pruebas
 
 ```bash
 ./mvnw test
 ```
-**Resultado:** `BUILD SUCCESS` con **21 tests**.
 
-## Respuestas a "Qué hay que pensar"
+**Resultado:** `BUILD SUCCESS` con **26 tests**: CRUD, POST ilegal sin basura, un código
+por cada excepción, simulación de las tres clases, reglas del dominio, sobrecarga y
+sobreescritura.
 
-- **Recurso y verbo:** Recurso `armas` en `/api/armas`. El verbo HTTP define la acción (POST crear, GET leer, PUT actualizar, DELETE borrar). No se ponen verbos en la URL.
-- **Identidad:** `id` con `@GeneratedValue` (generado por la base). El JSON de creación omite `id`.
-- **Herencia y tablas:** `SINGLE_TABLE` con discriminador `tipo_arma`. Se guarda toda la familia en una tabla; JPA instancia el subtipo correcto. Se ven los tres niveles conceptuales (Arma/ArmaDeFuego/Granada) en código.
-- **Interface y repositorio:** `ArmaRepository` es **interfaz** (Spring Data genera implementación) → desacoplamiento. `Equipable` es **interfaz de dominio** usada por `GET /api/armas/equipables` con objetos de familias distintas.
-- **Ocultamiento:** validación en constructores, `@PrePersist/@PreUpdate`, reglas en servicio/dominio. `POST` ilegal → excepción → handler → **400/409**, sin dejar fila sucia.
-- **PUT/PATCH:** Se usa **PUT** (reemplaza datos editables). Se **prohíbe cambiar el tipo** persistido → **409**.
-- **DELETE:** Borrado físico con `delete`, responde **204**. Si no existe → **404** vía `AccesoRecursoException`.
+## Respuestas a «Qué hay que pensar»
+
+- **Recurso y verbo:** el sustantivo es `armas` (`/api/armas`). El verbo HTTP dice la
+  operación; la URL no lleva verbos (`/crear`, `/borrar`).
+- **Identidad:** `id` con `@GeneratedValue`; lo asigna la base. El JSON de creación lo
+  omite y el de lectura lo devuelve.
+- **Herencia y tablas:** `SINGLE_TABLE` con discriminador `tipo_arma`. Toda la familia
+  vive en una tabla; JPA instancia la clase correcta. Se distingue el subtipo en el JSON
+  por el campo `tipo` (ver sección de Jackson).
+- **Interfaz y repositorio:** `ArmaRepository` es una interfaz generada por Spring Data;
+  el servicio depende del tipo, no de una implementación. `Equipable` es la interfaz de
+  dominio y la usa `GET /api/armas/equipables` con objetos de familias distintas.
+- **Protocolo del dominio:** `Equipable`; lo usan `Rifle` y `GranadaHumo` y el endpoint
+  `GET /api/armas/equipables`. Sí puede hablar con familias distintas porque el
+  controller solo ve `List<Equipable>`.
+- **Ocultamiento:** las reglas numéricas las sostienen los constructores y métodos del
+  dominio, más `@PrePersist`/`@PreUpdate` antes de guardar. Un `POST` ilegal responde
+  400/409 y la colección queda igual (hay prueba de integración).
+- **PUT y PATCH:** se usa `PUT`: reemplaza los datos editables (nombre, precio, daño).
+  Un campo omitido obligatorio responde 400; el `tipo` persistido no se puede cambiar
+  (409). La munición no se toca por `PUT`.
+- **DELETE:** borrado físico con `delete`; responde **204**. El verbo HTTP habla con el
+  mensaje del servicio `eliminar`, que primero busca y lanza 404 si no existe.
+- **Dos reglas:** (1) daño/consumo de munición al disparar; (2) carga desde la reserva al
+  recargar. Cambian el estado de más de un objeto en la simulación (`ArmaDeFuego` y
+  `Granada`). El recurso HTTP es `POST /api/armas/simular`; un `GET /api/armas` posterior
+  muestra el resultado persistido.
+- **Excepciones:** `ApiException` (base), `ViolacionReglaException` (regla incumplida) y
+  `AccesoRecursoException` (recurso inexistente). Un recurso inexistente y una regla
+  incumplida son tipos distintos (404 vs 400/409). El JSON de error lleva `tipo`,
+  `codigo` y `error`.
+- **¿Quién lanza la excepción?** El objeto del juego (`ArmaDeFuego.recargar`,
+  `Granada.recargar`, `Arma.disparar` cuando corresponde), no el controller. El handler
+  solo la traduce a HTTP.
+- **Si mañana cambia H2 por otra base:** se tocan `pom.xml` (driver) y
+  `application.properties` (URL/dialecto). No cambian las entidades, el repositorio, el
+  servicio, los controllers, las excepciones ni la colección de Insomnia.
+
+## Cómo se relaciona con la rúbrica
+
+| Criterio | Evidencia en este repositorio |
+|---|---|
+| 1. Entrega y arranque | Repo público, `./mvnw spring-boot:run`, README, `BITACORA.md`, `ESPECIFICACIONES.md`, commit enlazado. |
+| 2. Paquetes | `domain`, `repository`, `rest.controller`, `service.impl`, `exceptions` separados. |
+| 3. Ocultamiento | Campos privados, validaciones en constructores y `@PrePersist/@PreUpdate`, POST ilegal sin basura. |
+| 4. Herencia | `Arma` → `ArmaDeFuego`/`Granada`, métodos sobreescritos, excepciones base + dos hijas con handler. |
+| 5. Constructores y sobrecarga | Constructores simples/sobrecargados, `disparar()`/`disparar(double)`, `dispararTodas()`/`dispararTodas(double)`. |
+| 6. Observable | CRUD, H2 en archivo, dos reglas, simulación con las tres clases, handlers por tipo, Insomnia. |
+| 7. Git | Commits por dependencias/entidades/repositorio/controller/reglas/excepciones/Insomnia/README. |
+| 8. Documentación y defensa | README al día, diagrama Mermaid, sobrecarga/sobreescritura explicadas, bitácora con modelo y prompts. |
