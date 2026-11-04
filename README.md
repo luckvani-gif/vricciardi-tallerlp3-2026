@@ -11,15 +11,15 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`b43af94`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/b43af94) — *POO-08: persistencia H2, CRUD, jerarquía de excepciones, interface, Insomnia* |
+| Commit de la solución | [`bc85836`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/bc85836) — *POO-08: persistencia H2, CRUD, simulación, jerarquía de excepciones, interface, Insomnia* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
 | Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
 | Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
 
-> El hash del commit se actualiza en la última entrega. Para la corrección se usa el
-> commit enlazado en Classroom; el código de este README es el de ese commit.
+> El enlace apunta al commit que reúne el código y la documentación de esta entrega.
+> Para la corrección se usa el commit enlazado en Classroom.
 
 ## Cómo arrancar
 
