@@ -28,10 +28,13 @@ public interface ArmaService {
 
 	void eliminar(Long id);
 
+	/** Regla 1: Control de munición por disparo (consume balas). Persiste el estado. */
 	ResultadoDisparo disparar(Long id, Double distancia);
 
+	/** Regla 2: Recarga con control de reserva (no recarga si sin munición o cargador lleno). Persiste el estado. */
 	ResultadoRecarga recargar(Long id);
 
+	/** Usa la interfaz Equipable para listar objetos de familias distintas. */
 	List<Equipable> equipables();
 
 }

@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-10-30T16:34:49.000Z",
+  "__export_date": "2026-10-30T17:00:00.000Z",
   "__export_source": "vricciardi-tallerlp3-2026",
   "resources": [
     {
@@ -17,8 +17,8 @@
       "_id": "wrk_cs2",
       "_type": "workspace",
       "parentId": null,
-      "name": "Taller Git 2026 - CS2 CRUD",
-      "description": "CRUD persistido en H2 sobre la jerarquía Arma/ArmaDeFuego/Granada"
+      "name": "Taller Git 2026 - CS2 CRUD POO-08",
+      "description": "CRUD sobre familia Arma/ArmaDeFuego/Granada. Tres clases persistidas, interface Equipable, jerarquia ApiException con dos hijas"
     },
     {
       "_id": "grp_crud",
@@ -27,10 +27,16 @@
       "name": "CRUD /api/armas"
     },
     {
-      "_id": "grp_catalogo",
+      "_id": "grp_excepciones",
       "_type": "request_group",
       "parentId": "wrk_cs2",
-      "name": "Catálogo POO-06"
+      "name": "Excepciones (una base + dos hijas)"
+    },
+    {
+      "_id": "grp_simulacion",
+      "_type": "request_group",
+      "parentId": "wrk_cs2",
+      "name": "Simulacion persistida (dos reglas)"
     },
     {
       "_id": "req_index",
@@ -46,97 +52,33 @@
       "_id": "req_post_rifle",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "POST /api/armas - Crear rifle (caso feliz)",
+      "name": "POST /api/armas - Crear rifle (padre Arma + hija ArmaDeFuego)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 30,\n  \"reserva\": 90\n}"
       },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
     },
     {
       "_id": "req_post_humo",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "POST /api/armas - Crear granada humo (interfaz)",
+      "name": "POST /api/armas - Crear granada humo (hija Granada)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"humo\",\n  \"nombre\": \"Humo\",\n  \"precio\": 300\n}"
       },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
-    },
-    {
-      "_id": "req_post_precio_negativo",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "POST /api/armas - Precio negativo (error 400)",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": -5,\n  \"danio\": 36\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
-    },
-    {
-      "_id": "req_post_tipo_desconocido",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "POST /api/armas - Tipo desconocido (error 400)",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"tipo\": \"lanzamisiles\",\n  \"nombre\": \"RL\",\n  \"precio\": 100,\n  \"danio\": 10\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
-    },
-    {
-      "_id": "req_post_cargador_incompleto",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "POST /api/armas - Cargador sin reserva (error 400)",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 5\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
     },
     {
       "_id": "req_get_coleccion",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "GET /api/armas - Leer colección",
+      "name": "GET /api/armas - Leer colección desde repositorio",
       "method": "GET",
       "url": "{{ _.base_url }}/api/armas",
       "body": {},
@@ -153,56 +95,115 @@
       "headers": []
     },
     {
-      "_id": "req_get_no_existe",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "GET /api/armas/999999 - No existe (error 404)",
-      "method": "GET",
-      "url": "{{ _.base_url }}/api/armas/999999",
-      "body": {},
-      "headers": []
-    },
-    {
       "_id": "req_put",
       "_type": "request",
       "parentId": "grp_crud",
-      "name": "PUT /api/armas/{id} - Actualizar (reemplaza datos)",
+      "name": "PUT /api/armas/{id} - Actualizar",
       "method": "PUT",
       "url": "{{ _.base_url }}/api/armas/1",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47 Redline\",\n  \"precio\": 3000,\n  \"danio\": 40\n}"
       },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_delete",
+      "_type": "request",
+      "parentId": "grp_crud",
+      "name": "DELETE /api/armas/{id} - Eliminar (204)",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/armas/1",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_get_equipables",
+      "_type": "request",
+      "parentId": "grp_crud",
+      "name": "GET /api/armas/equipables - Interface Equipable (Rifle + GranadaHumo)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/armas/equipables",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_precio_negativo",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST ilegal - Precio negativo (ViolacionReglaException -> 400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": -5,\n  \"danio\": 36\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_post_tipo_desconocido",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST ilegal - Tipo desconocido (ViolacionReglaException -> 400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"lanzamisiles\",\n  \"nombre\": \"RL\",\n  \"precio\": 100,\n  \"danio\": 10\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_post_cargador_incompleto",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST ilegal - Cargador sin reserva (ViolacionReglaException -> 400)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 5\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
     },
     {
       "_id": "req_put_cambio_tipo",
       "_type": "request",
-      "parentId": "grp_crud",
-      "name": "PUT /api/armas/{id} - Cambio de tipo (error 409)",
+      "parentId": "grp_excepciones",
+      "name": "PUT ilegal - Cambio de tipo (ViolacionReglaException -> 409)",
       "method": "PUT",
       "url": "{{ _.base_url }}/api/armas/1",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"humo\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36\n}"
       },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ]
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_get_no_existe",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "GET id inexistente (AccesoRecursoException -> 404)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/armas/999999",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_delete_no_existe",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "DELETE id inexistente (AccesoRecursoException -> 404)",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/armas/999999",
+      "body": {},
+      "headers": []
     },
     {
       "_id": "req_post_disparar",
       "_type": "request",
-      "parentId": "grp_crud",
-      "name": "POST /api/armas/{id}/disparar - Simulación (persistente)",
+      "parentId": "grp_simulacion",
+      "name": "POST /api/armas/{id}/disparar - Regla 1: daño/consumo persistido",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas/1/disparar?distancia=10",
       "body": {},
@@ -211,80 +212,20 @@
     {
       "_id": "req_post_recargar",
       "_type": "request",
-      "parentId": "grp_crud",
-      "name": "POST /api/armas/{id}/recargar - Recargar",
+      "parentId": "grp_simulacion",
+      "name": "POST /api/armas/{id}/recargar - Regla 2: carga de munición persistida",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas/1/recargar",
       "body": {},
       "headers": []
     },
     {
-      "_id": "req_get_equipables",
+      "_id": "req_post_disparar_vacio",
       "_type": "request",
-      "parentId": "grp_crud",
-      "name": "GET /api/armas/equipables - Protocolo Equipable",
-      "method": "GET",
-      "url": "{{ _.base_url }}/api/armas/equipables",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_delete",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "DELETE /api/armas/{id} - Borrar",
-      "method": "DELETE",
-      "url": "{{ _.base_url }}/api/armas/1",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_delete_no_existe",
-      "_type": "request",
-      "parentId": "grp_crud",
-      "name": "DELETE /api/armas/999999 - No existe (error 404)",
-      "method": "DELETE",
-      "url": "{{ _.base_url }}/api/armas/999999",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_armas_rifle",
-      "_type": "request",
-      "parentId": "grp_catalogo",
-      "name": "GET /armas/rifle - Catálogo POO-06",
-      "method": "GET",
-      "url": "{{ _.base_url }}/armas/rifle",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_armas_rifle_disparar",
-      "_type": "request",
-      "parentId": "grp_catalogo",
-      "name": "GET /armas/rifle/disparar - Sobrecarga sin distancia",
-      "method": "GET",
-      "url": "{{ _.base_url }}/armas/rifle/disparar?veces=2",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_inventario",
-      "_type": "request",
-      "parentId": "grp_catalogo",
-      "name": "GET /inventario - Polimorfismo",
-      "method": "GET",
-      "url": "{{ _.base_url }}/inventario",
-      "body": {},
-      "headers": []
-    },
-    {
-      "_id": "req_inventario_disparar",
-      "_type": "request",
-      "parentId": "grp_catalogo",
-      "name": "GET /inventario/disparar - Sobrecarga Inventario",
-      "method": "GET",
-      "url": "{{ _.base_url }}/inventario/disparar?veces=1",
+      "parentId": "grp_simulacion",
+      "name": "POST disparar sin balas (ViolacionReglaException -> 409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/1/disparar?distancia=10",
       "body": {},
       "headers": []
     }

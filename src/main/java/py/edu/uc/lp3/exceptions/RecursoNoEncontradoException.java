@@ -1,7 +1,7 @@
 package py.edu.uc.lp3.exceptions;
 
-/** El id pedido no existe en H2 (404). */
-public class RecursoNoEncontradoException extends ApiException {
+/** Recurso persistido no encontrado por id. */
+public class RecursoNoEncontradoException extends AccesoRecursoException {
 
     public RecursoNoEncontradoException(String mensaje) {
         super(mensaje);

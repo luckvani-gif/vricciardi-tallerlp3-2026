@@ -1,9 +1,8 @@
 package py.edu.uc.lp3.exceptions;
 
 /**
- * Raíz de la jerarquía de errores de la API.
- * Cada subclase tiene su propio handler en ManejadorErrores: el tipo de
- * excepción decide el código HTTP, no un if dentro del controller.
+ * Base de la jerarquía de excepciones del dominio.
+ * Se exige: una base y dos hijas con un handler HTTP por tipo.
  */
 public abstract class ApiException extends RuntimeException {
 

@@ -126,6 +126,11 @@ public class ArmaServiceImpl implements ArmaService {
 		armaRepository.delete(existente);
 	}
 
+	/**
+	 * REGLA DE NEGOCIO 1 (persistida): Disparo consume munición/cooldown según el
+	 * estado del arma. Si el arma no puede disparar se lanza ConflictoDeEstadoException
+	 * y NO se persiste un estado ilegal. El cambio se guarda en H2.
+	 */
 	@Override
 	public ResultadoDisparo disparar(Long id, Double distancia) {
 		Arma arma = obtener(id);
@@ -137,6 +142,10 @@ public class ArmaServiceImpl implements ArmaService {
 		return resultado;
 	}
 
+	/**
+	 * REGLA DE NEGOCIO 2 (persistida): Recarga solo si hay reserva y el cargador
+	 * no está lleno. Las granadas no se recargan. Se valida el estado y se persiste.
+	 */
 	@Override
 	public ResultadoRecarga recargar(Long id) {
 		Arma arma = obtener(id);

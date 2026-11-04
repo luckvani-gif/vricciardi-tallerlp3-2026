@@ -1,7 +1,7 @@
 package py.edu.uc.lp3.exceptions;
 
-/** El discriminador del JSON no corresponde a ningún tipo persistible (400). */
-public class TipoNoSoportadoException extends SolicitudInvalidaException {
+/** Discriminador no soportado al crear/actualizar. */
+public class TipoNoSoportadoException extends ViolacionReglaException {
 
     public TipoNoSoportadoException(String mensaje) {
         super(mensaje);

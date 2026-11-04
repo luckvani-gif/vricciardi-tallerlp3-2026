@@ -28,6 +28,7 @@ import py.edu.uc.lp3.service.ArmaService;
 /**
  * CRUD REST de la familia persistida en H2.
  * La URL nombra el recurso (/api/armas) y el verbo HTTP dice que hacer.
+ * Trabaja con tres clases persistidas: Arma (padre), ArmaDeFuego y Granada.
  */
 @RestController
 @RequestMapping(ApiPaths.ARMAS_CRUD)
