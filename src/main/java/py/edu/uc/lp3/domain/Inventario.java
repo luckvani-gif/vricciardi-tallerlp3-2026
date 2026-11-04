@@ -31,7 +31,10 @@ public class Inventario {
     }
 
     public List<String> recargarTodas() {
-        return armas.stream().map(a -> a.getNombre() + ": " + a.recargar()).toList();
+        return armas.stream()
+                .filter(Arma::esRecargable)
+                .map(a -> a.getNombre() + ": " + a.recargar())
+                .toList();
     }
 
     public List<FichaTienda> tienda() {

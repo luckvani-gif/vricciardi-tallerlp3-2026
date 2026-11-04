@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+
 /**
  * Generaliza el control de munición: antes cada arma repetía la lógica de
  * cargador y recarga; ahora vive una sola vez acá y es final.
@@ -93,13 +95,23 @@ public abstract class ArmaDeFuego extends Arma {
     }
 
     @Override
+    public final boolean esRecargable() {
+        return true;
+    }
+
+    /**
+     * REGLA DE NEGOCIO 2 (en el dominio): solo se recarga si falta munición en el
+     * cargador y hay reserva. Si la regla no se cumple, el objeto lanza la
+     * excepción; el servicio solo persiste el estado resultante.
+     */
+    @Override
     public final String recargar() {
         int faltan = capacidadCargador - balasEnCargador;
         if (faltan == 0) {
-            return "El cargador ya está lleno";
+            throw new ConflictoDeEstadoException("El cargador ya está lleno");
         }
         if (reserva == 0) {
-            return "Sin munición de reserva";
+            throw new ConflictoDeEstadoException("Sin munición de reserva");
         }
         int carga = Math.min(faltan, reserva);
         balasEnCargador += carga;

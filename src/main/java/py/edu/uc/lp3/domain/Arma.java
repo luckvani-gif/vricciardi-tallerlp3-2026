@@ -117,6 +117,14 @@ public abstract class Arma {
     // ---- Comportamiento público que cada rama define ----
     public abstract String recargar();
 
+    /**
+     * ¿Esta rama de la familia admite recarga? La regla vive en el dominio:
+     * las armas de fuego sí, las granadas no. El servicio no decide esto.
+     */
+    public boolean esRecargable() {
+        return false;
+    }
+
     public abstract String getTipo();
 
     /** Estado legible (munición, cooldown...). */

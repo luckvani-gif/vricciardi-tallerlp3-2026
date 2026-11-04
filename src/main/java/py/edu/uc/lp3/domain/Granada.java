@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+
 /**
  * Las granadas no tienen cargador: se controlan por cantidad y cooldown.
  * Ese control es final y private: desde afuera no se puede saltear el cooldown.
@@ -31,6 +33,12 @@ public abstract class Granada extends Arma {
     protected Granada() {
     }
 
+    /** Constructor simple: cooldown, radio y cantidad de fábrica. */
+    protected Granada(String nombre, int precio, int danioBase) {
+        this(nombre, precio, danioBase, 3000, 5, 1);
+    }
+
+    /** Constructor sobrecargado: el llamador decide cooldown, radio y cantidad. */
     protected Granada(String nombre, int precio, int danioBase,
                       long cooldownMs, double radio, int cantidad) {
         super(nombre, precio, danioBase);
@@ -63,9 +71,8 @@ public abstract class Granada extends Arma {
         if (ultimoLanzamientoMs < -1) {
             throw new IllegalArgumentException("El último lanzamiento no es válido");
         }
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException("Debe haber al menos una granada");
-        }
+        // cantidad == 0 es legal después de lanzar la última granada. El mínimo
+        // de 1 se exige al construir, no al persistir el estado ya usado.
     }
 
     @Override
@@ -86,9 +93,10 @@ public abstract class Granada extends Arma {
         ultimoLanzamientoMs = System.currentTimeMillis();
     }
 
+    /** Las granadas no son recargables: la regla la sostiene el dominio. */
     @Override
     public final String recargar() {
-        return "Las granadas no se recargan: hay que comprar otra";
+        throw new ConflictoDeEstadoException("Las granadas no se recargan: hay que comprar otra");
     }
 
     /** Daño en área: máximo en el centro, 0 fuera del radio. */

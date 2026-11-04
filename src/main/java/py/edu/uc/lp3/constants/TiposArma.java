@@ -14,9 +14,10 @@ public class TiposArma {
 	public static final String HUMO = "humo";
 	public static final String FLASH = "flash";
 	public static final String INCENDIARIA = "incendiaria";
+	public static final String SENAL = "senal";
 
 	//Lista de tipos que se ofrecen en la tienda y en /inventario
 	public static final List<String> TODOS = List.of(PISTOLA, SUBFUSIL, RIFLE, ESCOPETA,
-			FRANCOTIRADOR, HUMO, FLASH, INCENDIARIA);
+			FRANCOTIRADOR, HUMO, FLASH, INCENDIARIA, SENAL);
 
 }
