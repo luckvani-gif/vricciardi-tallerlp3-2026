@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import py.edu.uc.lp3.repository.ArmaRepository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -35,6 +36,9 @@ class ArmaCrudIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ArmaRepository armaRepository;
 
     @Test
     @DisplayName("CRUD completo: crear, leer, actualizar y borrar contra H2")
@@ -80,6 +84,8 @@ class ArmaCrudIntegrationTest {
                                 {"tipo":"rifle","nombre":"AK-47","precio":-5,"danio":36}
                                 """))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.tipo").value("IllegalArgumentException"))
+                .andExpect(jsonPath("$.codigo").value(400))
                 .andExpect(jsonPath("$.error").value("El precio no puede ser negativo"));
 
         mockMvc.perform(get("/api/armas"))
@@ -91,10 +97,13 @@ class ArmaCrudIntegrationTest {
     @DisplayName("Cada error de la jerarquia tiene su codigo HTTP")
     void erroresTienenHandlerPorTipo() throws Exception {
         mockMvc.perform(get("/api/armas/{id}", 999999))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.tipo").value("RecursoNoEncontradoException"))
+                .andExpect(jsonPath("$.codigo").value(404));
 
         mockMvc.perform(delete("/api/armas/{id}", 999999))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.tipo").value("RecursoNoEncontradoException"));
 
         mockMvc.perform(post("/api/armas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,6 +111,7 @@ class ArmaCrudIntegrationTest {
                                 {"tipo":"lanzamisiles","nombre":"RL","precio":100,"danio":10}
                                 """))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.tipo").value("TipoNoSoportadoException"))
                 .andExpect(jsonPath("$.error").value("Tipo de arma desconocido: lanzamisiles"));
 
         mockMvc.perform(post("/api/armas")
@@ -109,7 +119,8 @@ class ArmaCrudIntegrationTest {
                         .content("""
                                 {"tipo":"rifle","nombre":"AK-47","precio":2700,"danio":36,"cargador":5}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.tipo").value("SolicitudInvalidaException"));
 
         long id = crear(new RifleJson("AK-47", 2700, 36, 30, 90));
         mockMvc.perform(put("/api/armas/{id}", id)
@@ -117,7 +128,9 @@ class ArmaCrudIntegrationTest {
                         .content("""
                                 {"tipo":"humo","nombre":"AK-47","precio":2700,"danio":36}
                                 """))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.tipo").value("ConflictoDeEstadoException"))
+                .andExpect(jsonPath("$.codigo").value(409));
     }
 
     @Test
@@ -154,6 +167,36 @@ class ArmaCrudIntegrationTest {
     }
 
     @Test
+    @DisplayName("La simulacion involucra Arma, ArmaDeFuego y Granada y deja todo persistido")
+    void simulacionInvolucraLasTresClases() throws Exception {
+        long fuegoId = crear(new RifleJson("AK-47", 2700, 36, 5, 15));
+        long granadaId = crearGranada();
+
+        mockMvc.perform(post("/api/armas/simular")
+                        .param("fuegoId", String.valueOf(fuegoId))
+                        .param("granadaId", String.valueOf(granadaId))
+                        .param("distancia", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idArmaDeFuego").value(fuegoId))
+                .andExpect(jsonPath("$.disparo.exito").value(true))
+                .andExpect(jsonPath("$.recarga").value("Recargó 1 balas (5/14)"))
+                .andExpect(jsonPath("$.idGranada").value(granadaId))
+                .andExpect(jsonPath("$.lanzamientoGranada.exito").value(true));
+
+        // fuerza los @PreUpdate para comprobar que cantidad 0 es un estado persistible
+        armaRepository.flush();
+
+        mockMvc.perform(get("/api/armas/{id}", fuegoId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balasEnCargador").value(5))
+                .andExpect(jsonPath("$.reserva").value(14));
+
+        mockMvc.perform(get("/api/armas/{id}", granadaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cantidad").value(0));
+    }
+
+    @Test
     @DisplayName("El endpoint de la interfaz devuelve equipables leidos de H2")
     void endpointDeInterfaz() throws Exception {
         crear(new RifleJson("AK-47", 2700, 36, 30, 90));
@@ -174,6 +217,18 @@ class ArmaCrudIntegrationTest {
         equipables.forEach(equipable -> ranuras.add(equipable.get("ranura").asText()));
         assertEquals(Set.of("primaria", "explosiva"), ranuras);
         assertTrue(equipables.get(0).has("mensaje"));
+    }
+
+    private long crearGranada() throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/armas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipo":"humo","nombre":"Humo","precio":300}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
     }
 
     private long crear(RifleJson rifle) throws Exception {
