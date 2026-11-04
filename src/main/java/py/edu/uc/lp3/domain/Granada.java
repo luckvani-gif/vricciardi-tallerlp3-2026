@@ -8,7 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
-import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+import py.edu.uc.lp3.exceptions.GranadaNoRecargableException;
 
 /**
  * Las granadas no tienen cargador: se controlan por cantidad y cooldown.
@@ -96,7 +96,7 @@ public abstract class Granada extends Arma {
     /** Las granadas no son recargables: la regla la sostiene el dominio. */
     @Override
     public final String recargar() {
-        throw new ConflictoDeEstadoException("Las granadas no se recargan: hay que comprar otra");
+        throw new GranadaNoRecargableException("Las granadas no se recargan: hay que comprar otra");
     }
 
     /** Daño en área: máximo en el centro, 0 fuera del radio. */
@@ -132,5 +132,9 @@ public abstract class Granada extends Arma {
 
     public final int getCantidad() {
         return cantidad;
+    }
+
+    public final boolean sinGranadas() {
+        return cantidad == 0;
     }
 }

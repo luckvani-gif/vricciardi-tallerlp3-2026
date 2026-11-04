@@ -2,9 +2,12 @@ package py.edu.uc.lp3.domain;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -125,6 +128,26 @@ public abstract class Arma {
         return false;
     }
 
+    /**
+     * Código estable que viaja en el JSON como "tipo" (rifle, humo, ...).
+     * Es el mismo valor que acepta el POST/PUT, así copiar el tipo del GET
+     * no provoca un 409 al actualizar.
+     */
+    @JsonProperty("tipo")
+    public final String getCodigoTipo() {
+        Class<?> clase = getClass();
+        while (clase != null) {
+            DiscriminatorValue valor = clase.getAnnotation(DiscriminatorValue.class);
+            if (valor != null) {
+                return valor.value();
+            }
+            clase = clase.getSuperclass();
+        }
+        return getClass().getSimpleName().toLowerCase();
+    }
+
+    /** Nombre legible de la familia para la tienda y la documentación. */
+    @JsonProperty("nombreTipo")
     public abstract String getTipo();
 
     /** Estado legible (munición, cooldown...). */

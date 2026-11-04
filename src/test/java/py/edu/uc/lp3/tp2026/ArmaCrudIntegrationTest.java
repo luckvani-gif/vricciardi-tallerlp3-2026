@@ -53,7 +53,8 @@ class ArmaCrudIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.nombre").value("AK-47"))
-                .andExpect(jsonPath("$.tipo").value("Rifle"));
+                .andExpect(jsonPath("$.tipo").value("rifle"))
+                .andExpect(jsonPath("$.nombreTipo").value("Rifle"));
 
         mockMvc.perform(put("/api/armas/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -129,7 +130,7 @@ class ArmaCrudIntegrationTest {
                                 {"tipo":"humo","nombre":"AK-47","precio":2700,"danio":36}
                                 """))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.tipo").value("ConflictoDeEstadoException"))
+                .andExpect(jsonPath("$.tipo").value("CambioDeTipoException"))
                 .andExpect(jsonPath("$.codigo").value(409));
     }
 
@@ -147,6 +148,7 @@ class ArmaCrudIntegrationTest {
 
         mockMvc.perform(post("/api/armas/{id}/disparar?distancia=10", id))
                 .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.tipo").value("CargadorVacioException"))
                 .andExpect(jsonPath("$.error").value("Cargador vacío: hay que recargar"));
 
         mockMvc.perform(get("/api/armas/{id}", id))

@@ -135,6 +135,9 @@ class SobrecargaSobreescrituraTests {
         assertEquals("Pistola", new Pistola("Glock-18", 200, 30).getTipo());
         assertEquals("Escopeta", new Escopeta("Nova", 1050, 104).getTipo());
         assertEquals("Granada de humo", new GranadaHumo("Humo", 300).getTipo());
+
+        assertEquals("pistola", new Pistola("Glock-18", 200, 30).getCodigoTipo());
+        assertEquals("humo", new GranadaHumo("Humo", 300).getCodigoTipo());
     }
 
     @Test

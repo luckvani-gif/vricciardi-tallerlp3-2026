@@ -8,7 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
-import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+import py.edu.uc.lp3.exceptions.CargadorLlenoException;
+import py.edu.uc.lp3.exceptions.SinReservaException;
 
 /**
  * Generaliza el control de munición: antes cada arma repetía la lógica de
@@ -108,10 +109,10 @@ public abstract class ArmaDeFuego extends Arma {
     public final String recargar() {
         int faltan = capacidadCargador - balasEnCargador;
         if (faltan == 0) {
-            throw new ConflictoDeEstadoException("El cargador ya está lleno");
+            throw new CargadorLlenoException("El cargador ya está lleno");
         }
         if (reserva == 0) {
-            throw new ConflictoDeEstadoException("Sin munición de reserva");
+            throw new SinReservaException("Sin munición de reserva");
         }
         int carga = Math.min(faltan, reserva);
         balasEnCargador += carga;

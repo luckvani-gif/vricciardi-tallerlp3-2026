@@ -8,7 +8,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import py.edu.uc.lp3.exceptions.AccesoRecursoException;
 import py.edu.uc.lp3.exceptions.ApiException;
-import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+import py.edu.uc.lp3.exceptions.ConflictoDePartidaException;
 import py.edu.uc.lp3.exceptions.RecursoNoEncontradoException;
 import py.edu.uc.lp3.exceptions.SolicitudInvalidaException;
 import py.edu.uc.lp3.exceptions.TipoNoSoportadoException;
@@ -65,9 +65,14 @@ public class ManejadorErrores {
         return cuerpo(e, HttpStatus.BAD_REQUEST.value());
     }
 
-    @ExceptionHandler(ConflictoDeEstadoException.class)
+    /**
+     * Conflictos de estado de la partida -> 409. El cuerpo conserva la clase
+     * concreta (CargadorVacioException, CambioDeTipoException, ...), así el
+     * cliente distingue qué regla del juego se incumplió.
+     */
+    @ExceptionHandler(ConflictoDePartidaException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse conflictoDeEstado(ConflictoDeEstadoException e) {
+    public ErrorResponse conflictoDePartida(ConflictoDePartidaException e) {
         return cuerpo(e, HttpStatus.CONFLICT.value());
     }
 

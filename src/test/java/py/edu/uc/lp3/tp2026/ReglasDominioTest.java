@@ -12,7 +12,9 @@ import py.edu.uc.lp3.domain.Arma;
 import py.edu.uc.lp3.domain.ArmaDeFuego;
 import py.edu.uc.lp3.domain.GranadaHumo;
 import py.edu.uc.lp3.domain.Rifle;
-import py.edu.uc.lp3.exceptions.ConflictoDeEstadoException;
+import py.edu.uc.lp3.exceptions.CargadorLlenoException;
+import py.edu.uc.lp3.exceptions.GranadaNoRecargableException;
+import py.edu.uc.lp3.exceptions.SinReservaException;
 
 /**
  * Las dos reglas de negocio viven en el dominio: el servicio no las inventa.
@@ -37,11 +39,11 @@ class ReglasDominioTest {
     @DisplayName("Regla 2: no se recarga un cargador lleno ni sin reserva")
     void recargaRespetaSusLimites() {
         ArmaDeFuego llena = new Rifle("AK-47", 2700, 36, 30, 90);
-        assertThrows(ConflictoDeEstadoException.class, llena::recargar);
+        assertThrows(CargadorLlenoException.class, llena::recargar);
 
         ArmaDeFuego sinReserva = new Rifle("AK-47", 2700, 36, 2, 0);
         sinReserva.disparar(10);
-        assertThrows(ConflictoDeEstadoException.class, sinReserva::recargar);
+        assertThrows(SinReservaException.class, sinReserva::recargar);
     }
 
     @Test
@@ -52,7 +54,7 @@ class ReglasDominioTest {
 
         assertEquals("Recargó 1 balas (5/14)", rifle.recargar());
         assertEquals("5/14", rifle.getEstado());
-        assertThrows(ConflictoDeEstadoException.class, rifle::recargar);
+        assertThrows(CargadorLlenoException.class, rifle::recargar);
     }
 
     @Test
@@ -60,6 +62,6 @@ class ReglasDominioTest {
     void granadaNoSeRecarga() {
         GranadaHumo humo = new GranadaHumo("Humo", 300);
         assertFalse(humo.esRecargable());
-        assertThrows(ConflictoDeEstadoException.class, humo::recargar);
+        assertThrows(GranadaNoRecargableException.class, humo::recargar);
     }
 }

@@ -7,12 +7,15 @@
     {
       "_id": "env_base",
       "_type": "environment",
-      "parentId": null,
+      "parentId": "wrk_cs2",
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:8080",
         "arma_id": "1",
-        "granada_id": "2"
+        "granada_id": "2",
+        "tipo": "rifle",
+        "arma_vacia_id": "3",
+        "arma_llena_id": "4"
       }
     },
     {
@@ -20,7 +23,8 @@
       "_type": "workspace",
       "parentId": null,
       "name": "Taller Git 2026 - CS2 CRUD POO-08",
-      "description": "CRUD sobre Arma/ArmaDeFuego/Granada, interfaz Equipable, simulacion persistida de dos reglas y jerarquia ApiException con dos hijas."
+      "description": "CRUD sobre Arma/ArmaDeFuego/Granada, interfaz Equipable, simulacion persistida de dos reglas y jerarquia ApiException con dos hijas.",
+      "scope": "collection"
     },
     {
       "_id": "grp_crud",
@@ -61,7 +65,12 @@
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 5,\n  \"reserva\": 15\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_post_humo",
@@ -74,7 +83,12 @@
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"humo\",\n  \"nombre\": \"Humo\",\n  \"precio\": 300\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_get_coleccion",
@@ -125,9 +139,14 @@
       "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47 Redline\",\n  \"precio\": 3000,\n  \"danio\": 40\n}"
+        "text": "{\n  \"tipo\": \"{{ _.tipo }}\",\n  \"nombre\": \"AK-47 Redline\",\n  \"precio\": 3000,\n  \"danio\": 40\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_get_equipables",
@@ -156,6 +175,16 @@
       "name": "POST /api/armas/simular - Dispara, recarga y lanza granada (tres clases)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas/simular?fuegoId={{ _.arma_id }}&granadaId={{ _.granada_id }}&distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_granada_agotada",
+      "_type": "request",
+      "parentId": "grp_simulacion",
+      "name": "POST disparar granada agotada - GranadaAgotadaException (409), correr despues de simular",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.granada_id }}/disparar?distancia=10",
       "body": {},
       "headers": []
     },
@@ -190,16 +219,6 @@
       "headers": []
     },
     {
-      "_id": "req_post_disparar_vacio",
-      "_type": "request",
-      "parentId": "grp_simulacion",
-      "name": "POST disparar sin balas - ConflictoDeEstadoException (409)",
-      "method": "POST",
-      "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}/disparar?distancia=10",
-      "body": {},
-      "headers": []
-    },
-    {
       "_id": "req_post_precio_negativo",
       "_type": "request",
       "parentId": "grp_excepciones",
@@ -210,7 +229,12 @@
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": -5,\n  \"danio\": 36\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_post_tipo_desconocido",
@@ -223,7 +247,12 @@
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"lanzamisiles\",\n  \"nombre\": \"RL\",\n  \"precio\": 100,\n  \"danio\": 10\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_post_cargador_incompleto",
@@ -236,26 +265,112 @@
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 5\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_post_rifle_vacio",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST preparar rifle sin reserva (cargador 1) y copiar id en arma_vacia_id",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47 vacio\",\n  \"precio\": 2700,\n  \"danio\": 36,\n  \"cargador\": 1,\n  \"reserva\": 0\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_post_gastar_bala_vacia",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST gastar la unica bala del rifle vacio (200)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_vacia_id }}/disparar?distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_disparar_vacio",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST disparar sin balas - CargadorVacioException (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_vacia_id }}/disparar?distancia=10",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_recargar_sin_reserva",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST recargar sin reserva - SinReservaException (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_vacia_id }}/recargar",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_post_rifle_lleno",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST preparar rifle con cargador lleno (30/90) y copiar id en arma_llena_id",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"rifle\",\n  \"nombre\": \"AK-47 lleno\",\n  \"precio\": 2700,\n  \"danio\": 36\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_recargar_lleno",
+      "_type": "request",
+      "parentId": "grp_excepciones",
+      "name": "POST recargar cargador lleno - CargadorLlenoException (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas/{{ _.arma_llena_id }}/recargar",
+      "body": {},
+      "headers": []
     },
     {
       "_id": "req_put_cambio_tipo",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "PUT ilegal - Cambio de tipo (ConflictoDeEstadoException -> 409)",
+      "name": "PUT ilegal - Cambio de tipo (CambioDeTipoException -> 409)",
       "method": "PUT",
       "url": "{{ _.base_url }}/api/armas/{{ _.arma_id }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"tipo\": \"humo\",\n  \"nombre\": \"AK-47\",\n  \"precio\": 2700,\n  \"danio\": 36\n}"
       },
-      "headers": [{"name": "Content-Type", "value": "application/json"}]
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     },
     {
       "_id": "req_recargar_granada",
       "_type": "request",
       "parentId": "grp_excepciones",
-      "name": "POST recargar granada - ConflictoDeEstadoException (409)",
+      "name": "POST recargar granada - GranadaNoRecargableException (409)",
       "method": "POST",
       "url": "{{ _.base_url }}/api/armas/{{ _.granada_id }}/recargar",
       "body": {},
