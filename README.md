@@ -11,15 +11,16 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`d48866d97cb16ad6390f424c99e0f322aa1fdbb3`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/d48866d97cb16ad6390f424c99e0f322aa1fdbb3) — *fix: tipo JSON estable, excepciones de partida e Insomnia importable* |
+| Commit de la solución | [`6a6e206d15a48cf74753f41d663c77e0d6737158`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/6a6e206d15a48cf74753f41d663c77e0d6737158) — *docs: corrige diagrama Mermaid y conteo de pruebas* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
 | Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
 | Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
 
-> El enlace apunta al commit funcional (código, excepciones e Insomnia) con su hash
-> completo. En Classroom se entrega el hash del commit final de documentación.
+> El enlace apunta al commit con el código, las excepciones, Insomnia y la documentación
+> corregida, con su hash completo. En Classroom se entrega el hash del commit final de
+> documentación.
 
 ## Cómo arrancar
 

@@ -4,7 +4,7 @@
 
 - **Estudiante:** luckvani-gif
 - **Repositorio:** https://github.com/luckvani-gif/vricciardi-tallerlp3-2026
-- **Commit de la solución:** `d48866d97cb16ad6390f424c99e0f322aa1fdbb3`
+- **Commit de la solución:** `6a6e206d15a48cf74753f41d663c77e0d6737158`
 - **Dominio:** Counter-Strike 2
 
 ## Objetivo
