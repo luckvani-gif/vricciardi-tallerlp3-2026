@@ -41,6 +41,9 @@
   `tipo` que devuelve el `GET` sirve para el `PUT`.
 - Se reemplazó la excepción genérica por reglas con nombre de CS2
   (`CargadorVacioException`, `SinReservaException`, `CambioDeTipoException`, etc.).
+- Verificación final: `./mvnw test` ejecuta **26 pruebas**; `SobrecargaSobreescrituraTests`
+  aporta **11**, y el diagrama Mermaid muestra los constructores simple/sobrecargado y
+  las dos firmas de `disparar`/`dispararTodas`.
 
 ## Sin IA
 

@@ -279,6 +279,8 @@ classDiagram
         -String nombre
         -int precio
         -int danioBase
+        #Arma()
+        #Arma(String, int, int)
         +disparar() ResultadoDisparo
         +disparar(double) ResultadoDisparo
         +recargar() String
@@ -290,6 +292,9 @@ classDiagram
         -Integer capacidadCargador
         -Integer balasEnCargador
         -Integer reserva
+        #ArmaDeFuego()
+        #ArmaDeFuego(String, int, int)
+        #ArmaDeFuego(String, int, int, int, int)
         +recargar() String
     }
     class Granada {
@@ -297,17 +302,55 @@ classDiagram
         -Long cooldownMs
         -Double radio
         -Integer cantidad
+        #Granada()
+        #Granada(String, int, int)
+        #Granada(String, int, int, long, double, int)
         +recargar() String
     }
-    class Pistola
-    class Rifle
-    class Escopeta
-    class Subfusil
-    class Francotirador
-    class GranadaHumo
-    class GranadaFlash
-    class GranadaIncendiaria
-    class GranadaSenal
+    class Pistola {
+        +Pistola(String, int, int)
+        +Pistola(String, int, int, int, int)
+    }
+    class Rifle {
+        +Rifle(String, int, int)
+        +Rifle(String, int, int, int, int)
+    }
+    class Escopeta {
+        +Escopeta(String, int, int)
+        +Escopeta(String, int, int, int, int)
+    }
+    class Subfusil {
+        +Subfusil(String, int, int)
+        +Subfusil(String, int, int, int, int)
+    }
+    class Francotirador {
+        +Francotirador(String, int, int)
+        +Francotirador(String, int, int, int, int)
+    }
+    class GranadaHumo {
+        +GranadaHumo(String, int)
+        +GranadaHumo(String, int, int)
+    }
+    class GranadaFlash {
+        +GranadaFlash(String, int)
+        +GranadaFlash(String, int, int)
+    }
+    class GranadaIncendiaria {
+        +GranadaIncendiaria(String, int, int)
+        +GranadaIncendiaria(String, int, int, int)
+    }
+    class GranadaSenal {
+        +GranadaSenal(String, int)
+        +GranadaSenal(String, int, int)
+    }
+    class Inventario {
+        +agregar(Arma)
+        +getArmas()
+        +dispararTodas()
+        +dispararTodas(double)
+        +recargarTodas()
+        +tienda()
+    }
 
     class ArmaRepository {
         <<interface JpaRepository>>
@@ -363,6 +406,8 @@ classDiagram
     Rifle ..|> Equipable
     GranadaHumo ..|> Equipable
 
+    Inventario o-- Arma
+    Inventario ..> ResultadoDisparo
     ArmaRepository ..> Arma
     ArmaService <|.. ArmaServiceImpl
     ArmaServiceImpl ..> ArmaRepository
@@ -375,6 +420,9 @@ classDiagram
 - **Herencia:** flechas `Arma <|-- ArmaDeFuego` y `Arma <|-- Granada`; las concretas
   heredan de esas dos ramas.
 - **Implementación de interfaz:** `Rifle ..|> Equipable` y `GranadaHumo ..|> Equipable`.
+- **Constructores y sobrecarga:** `Arma`, `ArmaDeFuego`, `Granada` y cada clase concreta
+  muestran constructor simple y sobrecargado; `Arma` muestra `disparar()` y
+  `disparar(double)`, e `Inventario` muestra `dispararTodas()` y `dispararTodas(double)`.
 - **Uso del repositorio:** `ArmaServiceImpl ..> ArmaRepository`; el controller no toca
   la base.
 - **Jerarquía de excepciones:** `ApiException` con las dos hijas y las excepciones de
@@ -401,9 +449,9 @@ classDiagram
 ./mvnw test
 ```
 
-**Resultado:** `BUILD SUCCESS` con **26 tests**: CRUD, POST ilegal sin basura, un código
-por cada excepción, simulación de las tres clases, reglas del dominio, sobrecarga y
-sobreescritura.
+**Resultado:** `BUILD SUCCESS` con **26 tests**: 6 de CRUD/integración, 11 de
+sobrecarga/sobreescritura, 4 de reglas de dominio, 4 de granadas y 1 de arranque. Incluyen
+el POST ilegal sin basura, un código por cada excepción y la simulación de las tres clases.
 
 ## Respuestas a «Qué hay que pensar»
 
