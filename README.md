@@ -68,6 +68,9 @@ py.edu.uc.lp3
 └── service/impl              # ArmaServiceImpl, InventarioServiceImpl
 ```
 
+Las excepciones viven en `exceptions` dentro de `py.edu.uc.lp3` para que el dominio las
+importe sin salir del paquete raíz.
+
 El dominio no conoce HTTP. La entrada HTTP no arma munición ni decide reglas: traduce
 JSON a mensajes del dominio y delega en el servicio.
 
