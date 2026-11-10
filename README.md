@@ -11,7 +11,7 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`6a6e206d15a48cf74753f41d663c77e0d6737158`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/6a6e206d15a48cf74753f41d663c77e0d6737158) — *docs: corrige diagrama Mermaid y conteo de pruebas* |
+| Commit de la solución | [`92d259729deb5ebdc67536c3fe70519839d3170b`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/92d259729deb5ebdc67536c3fe70519839d3170b) — *docs: justifica ubicación del paquete de excepciones* |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
