@@ -1,0 +1,243 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-22T00:00:00.000Z",
+  "__export_source": "vricciardi-tallerlp3-2026 POO-09",
+  "resources": [
+    {
+      "_id": "wrk_poo09",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Taller Git 2026 - CS2 APIs cruzadas POO-09",
+      "description": "A1 consulta A3 (explosión HE) y A2 (disparo) antes de persistir el escenario ataque-coordinado en su H2.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_poo09",
+      "_type": "environment",
+      "parentId": "wrk_poo09",
+      "name": "Base Environment POO-09",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "a2_base_url": "https://desktop-hrm8vjo.tailde75e4.ts.net",
+        "a3_base_url": "https://ariel.tail26e794.ts.net",
+        "fuego_id": "1",
+        "granada_id": "2",
+        "a2_atacante_id": "1",
+        "a2_objetivo_id": "2",
+        "a2_atacante_rechazo_id": "999999",
+        "a3_granada_id": "13",
+        "a3_granada_detonada_id": "6"
+      }
+    },
+    {
+      "_id": "grp_p09_openapi",
+      "_type": "request_group",
+      "parentId": "wrk_poo09",
+      "name": "0. OpenAPI de A1, A2 y A3"
+    },
+    {
+      "_id": "grp_p09_preparacion",
+      "_type": "request_group",
+      "parentId": "wrk_poo09",
+      "name": "1. Preparación de datos"
+    },
+    {
+      "_id": "grp_p09_escenario",
+      "_type": "request_group",
+      "parentId": "wrk_poo09",
+      "name": "2. Escenario ataque-coordinado"
+    },
+    {
+      "_id": "req_p09_openapi_a1",
+      "_type": "request",
+      "parentId": "grp_p09_openapi",
+      "name": "GET /v3/api-docs - OpenAPI de A1",
+      "method": "GET",
+      "url": "{{ _.base_url }}/v3/api-docs",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_swagger_a1",
+      "_type": "request",
+      "parentId": "grp_p09_openapi",
+      "name": "GET /swagger-ui/index.html - Swagger de A1",
+      "method": "GET",
+      "url": "{{ _.base_url }}/swagger-ui/index.html",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_openapi_a2",
+      "_type": "request",
+      "parentId": "grp_p09_openapi",
+      "name": "GET /v3/api-docs - OpenAPI de A2",
+      "method": "GET",
+      "url": "{{ _.a2_base_url }}/v3/api-docs",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_openapi_a3",
+      "_type": "request",
+      "parentId": "grp_p09_openapi",
+      "name": "GET /v3/api-docs - OpenAPI de A3",
+      "method": "GET",
+      "url": "{{ _.a3_base_url }}/v3/api-docs",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_a1_rifle",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A1: POST /api/armas - crear rifle (copiar id a fuego_id)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"tipo\":\"rifle\",\"nombre\":\"AK-47 POO-09\",\"precio\":2700,\"danio\":36,\"cargador\":5,\"reserva\":15}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_a1_humo",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A1: POST /api/armas - crear humo (copiar id a granada_id)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"tipo\":\"humo\",\"nombre\":\"Humo POO-09\",\"precio\":300}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_a2_atacante",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A2: POST /api/armas - crear Fusil atacante (copiar id a a2_atacante_id)",
+      "method": "POST",
+      "url": "{{ _.a2_base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"tipoArma\":\"Fusil\",\"nombre\":\"AK-47 A2 atacante\",\"precio\":2700,\"durabilidad\":100,\"dano\":36,\"precision\":71,\"recarga\":2.4,\"velocidad\":600,\"municionActual\":30,\"municionMaxima\":30,\"automatica\":false,\"mira\":1,\"retroceso\":0,\"silenciador\":false}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_a2_objetivo",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A2: POST /api/armas - crear Fusil objetivo (copiar id a a2_objetivo_id)",
+      "method": "POST",
+      "url": "{{ _.a2_base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"tipoArma\":\"Fusil\",\"nombre\":\"M4A1-S A2 objetivo\",\"precio\":2900,\"durabilidad\":100,\"dano\":38,\"precision\":75,\"recarga\":2.2,\"velocidad\":590,\"municionActual\":30,\"municionMaxima\":30,\"automatica\":true,\"mira\":1,\"retroceso\":1,\"silenciador\":false}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_a3_armas",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A3: GET /api/armas - elegir HE sin detonar (a3_granada_id)",
+      "method": "GET",
+      "url": "{{ _.a3_base_url }}/api/armas",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_a3_he",
+      "_type": "request",
+      "parentId": "grp_p09_preparacion",
+      "name": "A3: POST /api/armas - crear HE (opcional, copiar id a a3_granada_id)",
+      "method": "POST",
+      "url": "{{ _.a3_base_url }}/api/armas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"tipo\":\"granada-he\",\"nombre\":\"HE POO-09\",\"precio\":300,\"bando\":\"CT/T\",\"radioExplosion\":8,\"danoMaximo\":98,\"empujeMaximo\":6}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_feliz",
+      "_type": "request",
+      "parentId": "grp_p09_escenario",
+      "name": "POST Escenario feliz - A2 y A3 aceptan (201)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/escenarios/ataque-coordinado",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"nombre\":\"Ataque coordinado POO-09\",\"fuegoId\":{{ _.fuego_id }},\"granadaId\":{{ _.granada_id }},\"distancia\":10,\"a2AtacanteId\":{{ _.a2_atacante_id }},\"a2ObjetivoId\":{{ _.a2_objetivo_id }},\"critico\":false,\"a3GranadaId\":{{ _.a3_granada_id }},\"x\":0,\"y\":0,\"z\":0}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "res_p09_feliz",
+      "_type": "response",
+      "parentId": "req_p09_feliz",
+      "name": "Ejemplo: 201 camino feliz",
+      "status": 201,
+      "body": "{\"id\":1,\"nombre\":\"Ataque coordinado POO-09\",\"fuegoId\":1,\"granadaId\":2,\"distancia\":10.0,\"a2AtacanteId\":1,\"a2ObjetivoId\":2,\"a2Codigo\":200,\"a3GranadaId\":13,\"a3Codigo\":200,\"a2Resumen\":\"{\\\"danoAplicado\\\":36,\\\"objetivoDestruido\\\":false}\",\"a3Resumen\":\"{\\\"simulacion\\\":true,\\\"resumen\\\":\\\"explosión válida\\\"}\",\"resultadoLocal\":\"Se disparó AK-47 POO-09, se recargó y se lanzó Humo POO-09\"}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_listar",
+      "_type": "request",
+      "parentId": "grp_p09_escenario",
+      "name": "GET Jugadas guardadas - verificar persistencia",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/escenarios/ataque-coordinado",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_p09_rechazo_a2",
+      "_type": "request",
+      "parentId": "grp_p09_escenario",
+      "name": "POST Rechazo de A2 - atacante inexistente (404)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/escenarios/ataque-coordinado",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"nombre\":\"Rechazo A2\",\"fuegoId\":{{ _.fuego_id }},\"granadaId\":{{ _.granada_id }},\"distancia\":10,\"a2AtacanteId\":{{ _.a2_atacante_rechazo_id }},\"a2ObjetivoId\":{{ _.a2_objetivo_id }},\"critico\":false,\"a3GranadaId\":{{ _.a3_granada_id }},\"x\":0,\"y\":0,\"z\":0}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "res_p09_rechazo_a2",
+      "_type": "response",
+      "parentId": "req_p09_rechazo_a2",
+      "name": "Ejemplo: 404 rechazo de A2",
+      "status": 404,
+      "body": "{\"origen\":\"A2\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":404,\"error\":\"Rechazo de A2 (HTTP 404): no existe un arma con ese id\",\"cuerpoCompanero\":\"{\\\"status\\\":404,\\\"error\\\":\\\"Not Found\\\",\\\"mensaje\\\":\\\"No existe un arma con id 999999\\\"}\"}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_p09_rechazo_a3",
+      "_type": "request",
+      "parentId": "grp_p09_escenario",
+      "name": "POST Rechazo de A3 - HE detonada (409)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/escenarios/ataque-coordinado",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"nombre\":\"Rechazo A3\",\"fuegoId\":{{ _.fuego_id }},\"granadaId\":{{ _.granada_id }},\"distancia\":10,\"a2AtacanteId\":{{ _.a2_atacante_id }},\"a2ObjetivoId\":{{ _.a2_objetivo_id }},\"critico\":false,\"a3GranadaId\":{{ _.a3_granada_detonada_id }},\"x\":0,\"y\":0,\"z\":0}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "res_p09_rechazo_a3",
+      "_type": "response",
+      "parentId": "req_p09_rechazo_a3",
+      "name": "Ejemplo: 409 rechazo de A3",
+      "status": 409,
+      "body": "{\"origen\":\"A3\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":409,\"error\":\"Rechazo de A3 (HTTP 409): GranadaYaDetonadaException\",\"cuerpoCompanero\":\"{\\\"status\\\":409,\\\"error\\\":\\\"Conflict\\\",\\\"tipo\\\":\\\"GranadaYaDetonadaException\\\",\\\"mensaje\\\":\\\"La granada ya fue detonada\\\"}\"}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    }
+  ]
+}

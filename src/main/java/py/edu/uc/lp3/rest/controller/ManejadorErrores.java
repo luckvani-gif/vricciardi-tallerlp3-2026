@@ -1,6 +1,7 @@
 package py.edu.uc.lp3.rest.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,6 +11,7 @@ import py.edu.uc.lp3.exceptions.AccesoRecursoException;
 import py.edu.uc.lp3.exceptions.ApiException;
 import py.edu.uc.lp3.exceptions.ConflictoDePartidaException;
 import py.edu.uc.lp3.exceptions.RecursoNoEncontradoException;
+import py.edu.uc.lp3.exceptions.RechazoCompaneroException;
 import py.edu.uc.lp3.exceptions.SolicitudInvalidaException;
 import py.edu.uc.lp3.exceptions.TipoNoSoportadoException;
 import py.edu.uc.lp3.exceptions.ViolacionReglaException;
@@ -27,6 +29,9 @@ public class ManejadorErrores {
 
     /** Cuerpo único de error: tipo de excepción, código HTTP y mensaje del dominio. */
     public record ErrorResponse(String tipo, int codigo, String error) {
+    }
+
+    public record RechazoResponse(String origen, String tipo, int codigo, String error, String cuerpoCompanero) {
     }
 
     private static ErrorResponse cuerpo(ApiException e, int codigo) {
@@ -74,6 +79,13 @@ public class ManejadorErrores {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse conflictoDePartida(ConflictoDePartidaException e) {
         return cuerpo(e, HttpStatus.CONFLICT.value());
+    }
+
+    @ExceptionHandler(RechazoCompaneroException.class)
+    public ResponseEntity<RechazoResponse> rechazoCompanero(RechazoCompaneroException e) {
+        RechazoResponse cuerpo = new RechazoResponse(
+                e.companero(), e.getClass().getSimpleName(), e.codigoHttp(), e.getMessage(), e.cuerpoCompanero());
+        return ResponseEntity.status(e.codigoHttp()).body(cuerpo);
     }
 
     /** Red de seguridad: los constructores del dominio siguen lanzando IllegalArgumentException. */

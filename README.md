@@ -1,8 +1,9 @@
-# Taller Git 2026 — Armas de Counter-Strike 2 (POO-08)
+# Taller Git 2026 — Armas de Counter-Strike 2 (POO-08 y POO-09)
 
 Servicio HTTP (Spring Boot, API REST) que modela las armas de **Counter-Strike 2** con
 **persistencia en H2 + JPA**. Guarda el estado (munición, reserva y granadas) entre
-peticiones y simula dos reglas de juego persistidas.
+peticiones, simula dos reglas de juego persistidas y, desde POO-09, expone su OpenAPI y
+consume una regla de cada compañero antes de persistir un escenario cruzado.
 
 Materia: Lenguajes de Programación 3 — Taller de Git + POO.
 Licencia: Apache License 2.0.
@@ -11,16 +12,20 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit de la solución | [`92d259729deb5ebdc67536c3fe70519839d3170b`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/92d259729deb5ebdc67536c3fe70519839d3170b) — *docs: justifica ubicación del paquete de excepciones* |
+| Commit POO-08 | [`92d259729deb5ebdc67536c3fe70519839d3170b`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/92d259729deb5ebdc67536c3fe70519839d3170b) — *docs: justifica ubicación del paquete de excepciones* |
+| Commit POO-09 | `PENDIENTE_DE_COMMIT` — rellenar con el hash final de esta entrega |
 | Código | `src/main/java/py/edu/uc/lp3` |
-| Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`) |
+| Pruebas | `src/test/java/py/edu/uc/lp3/tp2026` (`./mvnw test`, 30 tests) |
+| OpenAPI en vivo | `http://localhost:8080/v3/api-docs` y `http://localhost:8080/swagger-ui/index.html` |
 | Bitácora de IA | [`BITACORA.md`](BITACORA.md) |
 | Especificaciones | [`ESPECIFICACIONES.md`](ESPECIFICACIONES.md) |
-| Colección Insomnia | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
+| Insomnia POO-08 | [`insomnia/CS2-CRUD-Insomnia.json`](insomnia/CS2-CRUD-Insomnia.json) |
+| Insomnia POO-09 | [`insomnia/CS2-POO09-Insomnia.json`](insomnia/CS2-POO09-Insomnia.json) |
+| Enunciado aplicado | [`docs/entrega-poo-09.md`](docs/entrega-poo-09.md) |
+| Diagramas Mermaid | [`docs/POO-09-diagramas.md`](docs/POO-09-diagramas.md) |
 
-> El enlace apunta al commit con el código, las excepciones, Insomnia y la documentación
-> corregida, con su hash completo. En Classroom se entrega el hash del commit final de
-> documentación.
+> El commit de POO-09 se completa con el hash real una vez confirmada la entrega. En
+> Classroom se entrega ese hash final, que debe coincidir con el documento aplicado.
 
 ## Cómo arrancar
 
@@ -35,6 +40,117 @@ JDBC URL de la consola: `jdbc:h2:file:./data/cs2` — usuario `sa`, sin contrase
 
 Si el servicio ya usó el puerto 8080, se puede cambiar con
 `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081`.
+
+Documentación generada por Springdoc: `http://localhost:8080/swagger-ui/index.html`
+(y JSON en `http://localhost:8080/v3/api-docs`).
+
+## POO-09 — API cruzada: ataque coordinado
+
+### Quiénes son A1, A2 y A3
+
+| Rol | Estudiante | Servicio | OpenAPI |
+|---|---|---|---|
+| **A1 (yo)** | luckvani-gif (Vricciardi) | `http://100.95.213.93:8081` | `http://100.95.213.93:8081/v3/api-docs` |
+| **A2** | compañero de CS2 Armas API | `https://desktop-hrm8vjo.tailde75e4.ts.net` | `https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs` |
+| **A3** | Ariel Gaona | `https://ariel.tail26e794.ts.net` | `https://ariel.tail26e794.ts.net/v3/api-docs` |
+
+**Escenario en una frase:** un jugador ejecuta un ataque coordinado en el que A1 dispara,
+recarga y lanza su granada, pide a A3 que valide una explosión HE y a A2 que valide el
+disparo, y guarda la jugada en su H2 **sólo si los dos compañeros la aceptan**.
+
+### Reglas tomadas de los compañeros
+
+- **A3:** `POST /api/explosiones/validar` con
+  `{"granadaId":13,"x":0,"y":0,"z":0}`. Calcula daño por radio y empuje **sin detonar**
+  la granada ni modificar su base. Se usa una HE sin detonar (por ejemplo, id 13 en los
+  datos vivos); una HE detonada (id 6) responde 409.
+- **A2:** `POST /api/armas/{id}/disparar?distancia=10` con
+  `{"objetivoId":2,"distancia":10,"critico":false}`. Aplica daño y munición en la base de
+  A2. Un id de atacante inexistente (`999999`) responde 404 y sirve como rechazo
+  determinista para la prueba.
+- **A1:** reutiliza su `ArmaService.simular(fuegoId, granadaId, distancia)` para la
+  simulación local, ahora con persistencia en la tabla propia `jugadas_cruzadas`.
+
+### Orden de las llamadas
+
+1. **A3 primero**, porque su validación no muta su base.
+2. **A2 después**, porque su regla sí escribe en el H2 de A2; si A3 rechaza, se evita
+   gastar munición ajena.
+3. **A1 al final**, dentro de `@Transactional`: recién con los dos `200` ejecuta su
+   simulación y graba la jugada. Si falla una regla local, hay rollback.
+
+### Endpoints nuevos en A1
+
+| Método | Ruta | Respuesta |
+|---|---|---|
+| POST | `/api/escenarios/ataque-coordinado` | `201` con la jugada persistida y los códigos de A2 y A3. |
+| GET | `/api/escenarios/ataque-coordinado` | `200` con todas las jugadas cruzadas guardadas. |
+
+Cuerpo de ejemplo:
+
+```json
+{
+  "nombre": "Ataque coordinado POO-09",
+  "fuegoId": 1,
+  "granadaId": 2,
+  "distancia": 10,
+  "a2AtacanteId": 1,
+  "a2ObjetivoId": 2,
+  "critico": false,
+  "a3GranadaId": 13,
+  "x": 0,
+  "y": 0,
+  "z": 0
+}
+```
+
+| Situación | Código en A1 | `origen` | ¿H2 de A1 cambia? |
+|---|---:|---|---|
+| A2 y A3 aceptan | 201 | — | Sí: nueva fila en `jugadas_cruzadas` |
+| A2 rechaza (id inexistente) | 404 | A2 | No |
+| A3 rechaza (HE detonada) | 409 | A3 | No; A2 no es llamado |
+| Regla local falla | 409 | A1 | No (rollback) |
+| Compañero sin respuesta | 502 | A2 o A3 | No |
+
+El error de rechazo ajeno conserva el código y el cuerpo del compañero:
+
+```json
+{
+  "origen": "A2",
+  "tipo": "RechazoCompaneroException",
+  "codigo": 404,
+  "error": "Rechazo de A2 (HTTP 404): no existe un arma con ese id",
+  "cuerpoCompanero": "{\"status\":404,\"error\":\"Not Found\"}"
+}
+```
+
+### Configuración externalizada
+
+```bash
+A2_BASE_URL=https://desktop-hrm8vjo.tailde75e4.ts.net \
+A3_BASE_URL=https://ariel.tail26e794.ts.net \
+COMPANEROS_TIMEOUT=5s \
+./mvnw spring-boot:run
+```
+
+En `application.properties` están los valores por defecto; en tests se usan URLs falsas y
+un `FakeCompaneroClient` para no depender de la red.
+
+### Cómo probarlo con Insomnia
+
+1. Importar [`insomnia/CS2-POO09-Insomnia.json`](insomnia/CS2-POO09-Insomnia.json).
+2. Ejecutar el grupo **1. Preparación**: crear el rifle y el humo en A1, el arma atacante
+   y el objetivo en A2, y copiar los ids a las variables del entorno. Tomar de A3 un id de
+   HE sin detonar; el de HE detonada ya viene en `a3_granada_detonada_id`.
+3. **Escenario feliz** → 201 y una fila nueva en `GET Jugadas guardadas`.
+4. **Rechazo de A2** (`a2AtacanteId=999999`) → 404 con `origen: "A2"` y la misma cantidad
+   de filas.
+5. **Rechazo de A3** (`a3GranadaId=6`) → 409 con `origen: "A3"`; A2 no es invocado y
+   tampoco se persiste nada.
+
+Los diagramas de secuencia de cada caso están en
+[`docs/POO-09-diagramas.md`](docs/POO-09-diagramas.md) y el enunciado aplicado en
+[`docs/entrega-poo-09.md`](docs/entrega-poo-09.md).
 
 ## Propiedades de H2 (explicadas)
 
@@ -58,14 +174,16 @@ En tests se usa `src/test/resources/application.properties` con `jdbc:h2:mem:lp3
 
 ```
 py.edu.uc.lp3
-├── Application.java          # arranque Spring Boot
+├── Application.java          # arranque Spring Boot + Springdoc
+├── config                    # CompanerosProperties (@ConfigurationProperties)
 ├── constants                 # ApiPaths, TiposArma
-├── domain                    # Arma, ArmaDeFuego, Granada, hijas, Equipable (interface), records
-├── exceptions                # ApiException -> ViolacionReglaException / AccesoRecursoException
-├── repository                # ArmaRepository (interfaz Spring Data JPA)
-├── rest/controller           # ArmaCrudController, ManejadorErrores, ArmaController, IndexController
-├── rest/dto                  # ArmaRequest
-└── service/impl              # ArmaServiceImpl, InventarioServiceImpl
+├── domain                    # Arma, ArmaDeFuego, Granada, hijas, JugadaCruzada, Equipable, records
+├── exceptions                # ApiException / ViolacionReglaException / AccesoRecursoException / RechazoCompaneroException
+├── repository                # ArmaRepository, JugadaCruzadaRepository (interfaces Spring Data JPA)
+├── rest/controller           # ArmaCrudController, EscenarioCruzadoController, ManejadorErrores, ArmaController, IndexController
+├── rest/dto                  # ArmaRequest, EscenarioCruzadoRequest, JugadaCruzadaResponse
+├── service                   # ArmaService, CompaneroClient, EscenarioCruzadoService, RespuestaExterna
+└── service/impl              # ArmaServiceImpl, InventarioServiceImpl, CompaneroRestClient, EscenarioCruzadoServiceImpl, RegistroJugadaService
 ```
 
 Las excepciones viven en `exceptions` dentro de `py.edu.uc.lp3` para que el dominio las
@@ -453,9 +571,12 @@ classDiagram
 ./mvnw test
 ```
 
-**Resultado:** `BUILD SUCCESS` con **26 tests**: 6 de CRUD/integración, 11 de
-sobrecarga/sobreescritura, 4 de reglas de dominio, 4 de granadas y 1 de arranque. Incluyen
-el POST ilegal sin basura, un código por cada excepción y la simulación de las tres clases.
+**Resultado:** `BUILD SUCCESS` con **30 tests**: 6 de CRUD/integración, 11 de
+sobrecarga/sobreescritura, 4 de reglas de dominio, 4 de granadas, 1 de arranque y 4 nuevos
+de `EscenarioCruzadoTest` (feliz, rechazo de A2, rechazo de A3 y OpenAPI publicado). Los
+clientes de los compañeros se falsifican con `@Primary` en tests, así que la suite no
+llama a la red. Incluyen además el POST ilegal sin basura, un código por cada excepción y
+la simulación de las tres clases.
 
 ## Respuestas a «Qué hay que pensar»
 
@@ -510,3 +631,4 @@ el POST ilegal sin basura, un código por cada excepción y la simulación de la
 | 6. Observable | CRUD, H2 en archivo, dos reglas, simulación con las tres clases, handlers por tipo, Insomnia. |
 | 7. Git | Commits por dependencias/entidades/repositorio/controller/reglas/excepciones/Insomnia/README. |
 | 8. Documentación y defensa | README al día, diagrama Mermaid, sobrecarga/sobreescritura explicadas, bitácora con modelo y prompts. |
+| 9. APIs cruzadas (POO-09) | OpenAPI publicado con Springdoc, cliente A2/A3 externalizable, rechazos propagados con `origen`, persistencia transaccional de `jugadas_cruzadas`, Insomnia y diagramas propios. |

@@ -39,7 +39,11 @@ public class IndexController {
 						"GET " + ApiPaths.ARMAS + "/{tipo}",
 						"GET " + ApiPaths.ARMAS + "/{tipo}/disparar?veces=3",
 						"GET " + ApiPaths.INVENTARIO,
-						"GET " + ApiPaths.INVENTARIO + "/disparar?veces=2"));
+						"GET " + ApiPaths.INVENTARIO + "/disparar?veces=2",
+						"POST " + ApiPaths.ATAQUE_COORDINADO,
+						"GET " + ApiPaths.ATAQUE_COORDINADO,
+						"GET /v3/api-docs",
+						"GET /swagger-ui.html"));
 	}
 
 }

@@ -18,4 +18,8 @@ public class ApiPaths {
 	//Operaciones con el inventario
 	public static final String INVENTARIO = BASE_API + "/inventario";
 
+	//Escenario propio de POO-09: consulta a A2 y A3 antes de persistir.
+	public static final String ESCENARIOS = API + "/escenarios";
+	public static final String ATAQUE_COORDINADO = ESCENARIOS + "/ataque-coordinado";
+
 }
