@@ -71,6 +71,7 @@
   `SobrecargaSobreescrituraTests` aporta **11**, `EscenarioCruzadoTest` aporta **4** y el
   diagrama Mermaid de POO-08 muestra los constructores simple/sobrecargado y las dos firmas
   de `disparar`/`dispararTodas`.
+- Commit de la solución POO-09: `91179e0ba41f336421a02b21e61efc6a8ba08b13`.
 
 ## Sin IA
 

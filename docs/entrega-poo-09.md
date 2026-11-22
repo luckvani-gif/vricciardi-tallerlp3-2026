@@ -42,6 +42,4 @@ Los diagramas Mermaid de cada caso están en [`docs/POO-09-diagramas.md`](POO-09
 
 ## Enlace al commit de la solución
 
-`PENDIENTE_DE_COMMIT` — reemplazar por:
-
-`https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/<HASH_DEL_COMMIT>`
+[`91179e0ba41f336421a02b21e61efc6a8ba08b13`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/91179e0ba41f336421a02b21e61efc6a8ba08b13) — *feat: escenario ataque-coordinado con APIs cruzadas POO-09*.
