@@ -3,6 +3,9 @@ package py.edu.uc.lp3.service.impl;
 import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -23,27 +26,41 @@ import py.edu.uc.lp3.service.RespuestaExterna;
 @Component
 public class CompaneroRestClient implements CompaneroClient {
 
+    private static final Logger LOG = LogManager.getLogger(CompaneroRestClient.class);
+
     private final RestClient a2;
     private final RestClient a3;
 
+    @Autowired
     public CompaneroRestClient(CompanerosProperties propiedades) {
-        Duration timeout = propiedades.timeout() == null ? Duration.ofSeconds(5) : propiedades.timeout();
-        int timeoutMs = (int) timeout.toMillis();
+        this(propiedades,
+                RestClient.builder().requestFactory(factoria(propiedades)),
+                RestClient.builder().requestFactory(factoria(propiedades)));
+    }
+
+    CompaneroRestClient(CompanerosProperties propiedades, RestClient.Builder a2Builder, RestClient.Builder a3Builder) {
+        this.a2 = a2Builder.baseUrl(propiedades.a2BaseUrl()).build();
+        this.a3 = a3Builder.baseUrl(propiedades.a3BaseUrl()).build();
+        LOG.debug("Clientes listos: A2={}, A3={}, timeout={}ms",
+                propiedades.a2BaseUrl(), propiedades.a3BaseUrl(), timeout(propiedades).toMillis());
+    }
+
+    private static SimpleClientHttpRequestFactory factoria(CompanerosProperties propiedades) {
+        int timeoutMs = (int) timeout(propiedades).toMillis();
         SimpleClientHttpRequestFactory factoria = new SimpleClientHttpRequestFactory();
         factoria.setConnectTimeout(timeoutMs);
         factoria.setReadTimeout(timeoutMs);
-        this.a2 = RestClient.builder()
-                .baseUrl(propiedades.a2BaseUrl())
-                .requestFactory(factoria)
-                .build();
-        this.a3 = RestClient.builder()
-                .baseUrl(propiedades.a3BaseUrl())
-                .requestFactory(factoria)
-                .build();
+        return factoria;
+    }
+
+    private static Duration timeout(CompanerosProperties propiedades) {
+        return propiedades.timeout() == null ? Duration.ofSeconds(5) : propiedades.timeout();
     }
 
     @Override
     public RespuestaExterna validarDisparoA2(Long atacanteId, Long objetivoId, double distancia, boolean critico) {
+        LOG.debug("A2 request: POST /api/armas/disparar atacanteId={} objetivoId={} distancia={} critico={}",
+                atacanteId, objetivoId, distancia, critico);
         try {
             ResponseEntity<String> respuesta = a2.post()
                     .uri("/api/armas/{id}/disparar?distancia={distancia}", atacanteId, distancia)
@@ -55,16 +72,21 @@ public class CompaneroRestClient implements CompaneroClient {
                     .retrieve()
                     .onStatus(estado -> estado.is4xxClientError() || estado.is5xxServerError(), (peticion, r) -> { })
                     .toEntity(String.class);
-            return new RespuestaExterna(respuesta.getStatusCode().value(), respuesta.getBody());
+            RespuestaExterna resultado = new RespuestaExterna(respuesta.getStatusCode().value(), respuesta.getBody());
+            LOG.debug("A2 response: status={} body={}", resultado.codigo(), resultado.cuerpo());
+            return resultado;
         } catch (ResourceAccessException e) {
+            LOG.debug("A2 sin respuesta: {}", e.getMessage(), e);
             return new RespuestaExterna(502, cuerpoNoDisponible("A2", e));
         } catch (RestClientException e) {
+            LOG.debug("A2 error de cliente: {}", e.getMessage(), e);
             return new RespuestaExterna(502, cuerpoNoDisponible("A2", e));
         }
     }
 
     @Override
     public RespuestaExterna validarExplosionA3(Long granadaId, double x, double y, double z) {
+        LOG.debug("A3 request: POST /api/explosiones/validar granadaId={} x={} y={} z={}", granadaId, x, y, z);
         try {
             ResponseEntity<String> respuesta = a3.post()
                     .uri("/api/explosiones/validar")
@@ -77,10 +99,14 @@ public class CompaneroRestClient implements CompaneroClient {
                     .retrieve()
                     .onStatus(estado -> estado.is4xxClientError() || estado.is5xxServerError(), (peticion, r) -> { })
                     .toEntity(String.class);
-            return new RespuestaExterna(respuesta.getStatusCode().value(), respuesta.getBody());
+            RespuestaExterna resultado = new RespuestaExterna(respuesta.getStatusCode().value(), respuesta.getBody());
+            LOG.debug("A3 response: status={} body={}", resultado.codigo(), resultado.cuerpo());
+            return resultado;
         } catch (ResourceAccessException e) {
+            LOG.debug("A3 sin respuesta: {}", e.getMessage(), e);
             return new RespuestaExterna(502, cuerpoNoDisponible("A3", e));
         } catch (RestClientException e) {
+            LOG.debug("A3 error de cliente: {}", e.getMessage(), e);
             return new RespuestaExterna(502, cuerpoNoDisponible("A3", e));
         }
     }

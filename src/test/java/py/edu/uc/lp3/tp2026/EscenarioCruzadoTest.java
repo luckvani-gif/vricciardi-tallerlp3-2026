@@ -46,7 +46,7 @@ class EscenarioCruzadoTest {
     @BeforeEach
     void reiniciarFake() {
         fake.a2Respuesta = new RespuestaExterna(200, "{\"danoAplicado\":36,\"objetivoDestruido\":false}");
-        fake.a3Respuesta = new RespuestaExterna(200, "{\"simulacion\":true,\"resumen\":\"explosion valida\"}");
+        fake.a3Respuesta = new RespuestaExterna(200, "{\"simulacion\":true,\"resumen\":\"explosión válida\"}");
         fake.llamadasA2 = 0;
         fake.llamadasA3 = 0;
     }
@@ -120,6 +120,27 @@ class EscenarioCruzadoTest {
         assertEquals(0, jugadaRepository.count());
         assertEquals(0, fake.llamadasA2);
         assertEquals(1, fake.llamadasA3);
+    }
+
+    @Test
+    @DisplayName("Si la regla local falla, A2 y A3 no son llamados")
+    void falloLocalNoLlamaCompaneros() throws Exception {
+        long fuegoId = crear("""
+                {"tipo":"rifle","nombre":"AK-47 sin balas","precio":2700,"danio":36,"cargador":1,"reserva":0}
+                """);
+        long granadaId = crearGranada();
+        mockMvc.perform(post("/api/armas/{id}/disparar?distancia=10", fuegoId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/escenarios/ataque-coordinado")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo(fuegoId, granadaId, 21L, 22L, 13L)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.tipo").value("CargadorVacioException"));
+
+        assertEquals(0, jugadaRepository.count());
+        assertEquals(0, fake.llamadasA2);
+        assertEquals(0, fake.llamadasA3);
     }
 
     @Test
