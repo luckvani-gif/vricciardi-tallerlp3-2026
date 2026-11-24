@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +20,10 @@ import py.edu.uc.lp3.domain.Pistola;
 import py.edu.uc.lp3.domain.ResultadoDisparo;
 import py.edu.uc.lp3.domain.Rifle;
 import py.edu.uc.lp3.domain.Subfusil;
+import py.edu.uc.lp3.repository.ArmaRepository;
 import py.edu.uc.lp3.service.impl.ArmaServiceImpl;
 
-/**
- * Comprueba los dos mecanismos que pide el enunciado:
- * sobrecarga (mismo nombre, otra lista de argumentos) y sobreescritura
- * (misma firma, cada hija con su propia implementacion).
- */
 class SobrecargaSobreescrituraTests {
-
-    // ---- Constructores simples: dejan el arma en un estado legal ----
 
     @Test
     @DisplayName("Constructor simple de cada arma de fuego: deja cargador y reserva definidos")
@@ -48,10 +43,8 @@ class SobrecargaSobreescrituraTests {
         assertEquals(1, new GranadaIncendiaria("Molotov", 400, 40).getCantidad());
     }
 
-    // ---- Constructores sobrecargados: el llamador decide ----
-
     @Test
-    @DisplayName("Constructor sobrecargado: la municion que pasa el llamador es la que queda")
+    @DisplayName("Constructor sobrecargado: la munición que pasa el llamador es la que queda")
     void constructorSobrecargadoUsaLoQuePasaElLlamador() {
         assertEquals("10/20", new Pistola("Glock-18", 200, 30, 10, 20).getEstado());
         assertEquals(5, new GranadaHumo("Humo", 300, 5).getCantidad());
@@ -59,15 +52,19 @@ class SobrecargaSobreescrituraTests {
     }
 
     @Test
-    @DisplayName("Ninguna firma deja el arma en un estado imposible")
-    void ningunaFirmaDejaEstadoImposible() {
-        assertThrows(IllegalArgumentException.class, () -> new Pistola("  ", 200, 30));
-        assertThrows(IllegalArgumentException.class, () -> new Pistola("Glock-18", -1, 30));
-        assertThrows(IllegalArgumentException.class, () -> new Pistola("Glock-18", 200, 30, 0, 10));
-        assertThrows(IllegalArgumentException.class, () -> new GranadaHumo("Humo", 300, 0));
-    }
+    @DisplayName("El servicio rechaza datos inválidos antes de crear el arma")
+    void elServicioRechazaDatosInvalidos() {
+        ArmaServiceImpl servicio = servicioConMock();
 
-    // ---- Sobrecarga del mensaje del dominio ----
+        assertThrows(IllegalArgumentException.class, () -> servicio.crear("pistola", "  ", 200, 30, null, null));
+        assertThrows(IllegalArgumentException.class, () -> servicio.crear("pistola", "Glock-18", -1, 30, null, null));
+        RuntimeException error = assertThrows(RuntimeException.class,
+                () -> servicio.crear("pistola", "Glock-18", 200, 30, 0, 10));
+        assertTrue(error.getMessage().contains("cargador"));
+        RuntimeException incompleta = assertThrows(RuntimeException.class,
+                () -> servicio.crear("rifle", "AK-47", 2700, 36, 5, null));
+        assertTrue(incompleta.getMessage().contains("juntos"));
+    }
 
     @Test
     @DisplayName("disparar() es la sobrecarga de disparar(double): misma distancia por defecto")
@@ -93,31 +90,27 @@ class SobrecargaSobreescrituraTests {
         assertEquals(2, inventario.dispararTodas(25).size());
     }
 
-    // ---- La fabrica de la capa de servicios tambien respeta las dos firmas ----
-
     @Test
-    @DisplayName("Sin municion en la URL entra el constructor simple; con municion, el sobrecargado")
+    @DisplayName("Sin munición en la URL entra el constructor simple; con munición, el sobrecargado")
     void laFabricaUsaElConstructorQueCorresponde() {
-        ArmaServiceImpl servicio = new ArmaServiceImpl();
+        ArmaServiceImpl servicio = servicioConMock();
 
         assertEquals("30/90", servicio.crear("rifle", null, null, null, null, null).getEstado());
         assertEquals("6/12", servicio.crear("rifle", null, null, null, 6, 12).getEstado());
     }
 
     @Test
-    @DisplayName("Cargador y reserva tienen que venir juntos: la mitad no es un estado valido")
+    @DisplayName("Cargador y reserva tienen que venir juntos: la mitad no es un estado válido")
     void laFabricaRechazaMunicionIncompleta() {
-        ArmaServiceImpl servicio = new ArmaServiceImpl();
+        ArmaServiceImpl servicio = servicioConMock();
 
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> servicio.crear("rifle", null, null, null, 5, null));
         assertTrue(error.getMessage().contains("juntos"));
     }
 
-    // ---- Sobreescritura: misma firma, implementacion propia en cada hija ----
-
     @Test
-    @DisplayName("Cada hija sobreescribe factorDistancia con su propia caida de dano")
+    @DisplayName("Cada hija sobreescribe factorDistancia con su propia caída de daño")
     void cadaHijaSobreescribeConSuPropiaCaida() {
         double distancia = 30;
         Arma subfusil = new Subfusil("MP9", 1250, 26);
@@ -147,8 +140,19 @@ class SobrecargaSobreescrituraTests {
         inventario.agregar(new Escopeta("Nova", 1050, 104));
         inventario.agregar(new Francotirador("AWP", 4750, 115));
 
-        // Sin if ni instanceof: el comportamiento sale del metodo sobreescrito
         assertEquals("Escopeta", inventario.dispararTodas(4).get(0).tipo());
         assertEquals("Francotirador", inventario.dispararTodas(4).get(1).tipo());
+    }
+
+    private static ArmaServiceImpl servicioConMock() {
+        ArmaServiceImpl servicio = new ArmaServiceImpl();
+        try {
+            var campo = ArmaServiceImpl.class.getDeclaredField("armaRepository");
+            campo.setAccessible(true);
+            campo.set(servicio, mock(ArmaRepository.class));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+        return servicio;
     }
 }

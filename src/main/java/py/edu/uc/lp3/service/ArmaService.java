@@ -10,8 +10,8 @@ import py.edu.uc.lp3.domain.ResultadoSimulacion;
 
 /**
  * Servicio que construye armas y administra su ciclo de vida en H2.
- * Es el unico lugar donde se decide el tipo concreto: el resto de la
- * aplicacion trabaja siempre con el tipo padre Arma.
+ * Es el único lugar donde se decide el tipo concreto: el resto de la
+ * aplicación trabaja siempre con el tipo padre Arma.
  */
 public interface ArmaService {
 

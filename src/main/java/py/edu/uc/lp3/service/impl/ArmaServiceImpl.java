@@ -24,9 +24,6 @@ import py.edu.uc.lp3.domain.ResultadoSimulacion;
 import py.edu.uc.lp3.domain.Rifle;
 import py.edu.uc.lp3.domain.Subfusil;
 import py.edu.uc.lp3.exceptions.CambioDeTipoException;
-import py.edu.uc.lp3.exceptions.CargadorVacioException;
-import py.edu.uc.lp3.exceptions.GranadaAgotadaException;
-import py.edu.uc.lp3.exceptions.GranadaEnCooldownException;
 import py.edu.uc.lp3.exceptions.RecursoNoEncontradoException;
 import py.edu.uc.lp3.exceptions.SolicitudInvalidaException;
 import py.edu.uc.lp3.exceptions.TipoNoSoportadoException;
@@ -41,11 +38,11 @@ public class ArmaServiceImpl implements ArmaService {
 
 	/*
 	 * Cada case devuelve el tipo concreto del dominio (Pistola, Escopeta, ...)
-	 * pero el metodo declara que devuelve Arma: quien lo usa no depende del tipo
+	 * pero el método declara que devuelve Arma: quien lo usa no depende del tipo
 	 * concreto, solo del padre.
 	 *
-	 * Cuando la URL no manda municion entra el CONSTRUCTOR SIMPLE de cada arma de
-	 * fuego (el que trae su cargador y reserva de fabrica); cuando manda, entra el
+	 * Cuando la URL no manda munición entra el CONSTRUCTOR SIMPLE de cada arma de
+	 * fuego (el que trae su cargador y reserva de fábrica); cuando manda, entra el
 	 * constructor sobrecargado. Las granadas siempre usan el simple, porque la
 	 * cantidad de granadas no es un dato que se mande por la URL.
 	 */
@@ -54,9 +51,8 @@ public class ArmaServiceImpl implements ArmaService {
 		if (tipo == null || tipo.isBlank()) {
 			throw new TipoNoSoportadoException("El tipo de arma es obligatorio");
 		}
-		if ((cargador == null) != (reserva == null)) {
-			throw new SolicitudInvalidaException("cargador y reserva van juntos: mandalos los dos o ninguno");
-		}
+		ReglasJuego.validarDatos(o(nombre, "Arma"), o(precio, 1), o(danio, 1));
+		ReglasJuego.validarMunicion(cargador, reserva);
 		boolean simple = cargador == null;
 		return switch (tipo.toLowerCase()) {
 			case TiposArma.PISTOLA -> simple
@@ -139,6 +135,7 @@ public class ArmaServiceImpl implements ArmaService {
 		if (nombre == null || nombre.isBlank() || precio == null || danio == null) {
 			throw new SolicitudInvalidaException("PUT necesita nombre, precio y danio");
 		}
+		ReglasJuego.validarDatos(nombre, precio, danio);
 		existente.actualizarDatos(nombre, precio, danio);
 		return armaRepository.save(existente);
 	}
@@ -150,31 +147,30 @@ public class ArmaServiceImpl implements ArmaService {
 	}
 
 	/**
-	 * REGLA DE NEGOCIO 1 (persistida): Disparo consume munición/cooldown según el
-     * estado del arma. Si el arma no puede disparar se lanza un conflicto de
-     * partida con el nombre de la regla y NO se persiste un estado ilegal.
+	 * REGLA DE NEGOCIO 1 (persistida): el servicio valida distancia, munición y
+	 * cooldown antes de pedirle al arma una transición de estado. Las excepciones
+	 * se lanzan aquí y NUNCA desde la entidad.
 	 */
 	@Override
 	@Transactional
 	public ResultadoDisparo disparar(Long id, Double distancia) {
 		Arma arma = obtener(id);
-        ResultadoDisparo resultado = distancia == null ? arma.disparar() : arma.disparar(distancia);
-        if (!resultado.exito()) {
-            throw falloDeDisparo(arma, resultado);
-        }
+		double distanciaEfectiva = o(distancia, (double) Arma.DISTANCIA_POR_DEFECTO);
+		ReglasJuego.validarDisparo(arma, distanciaEfectiva);
+		ResultadoDisparo resultado = arma.disparar(distanciaEfectiva);
 		armaRepository.save(arma);
 		return resultado;
 	}
 
 	/**
 	 * REGLA DE NEGOCIO 2 (persistida): la validez de la recarga la decide el
-	 * dominio (ArmaDeFuego.recargar / Granada.recargar). El servicio solo persiste
-	 * el estado resultante; si la regla falla, la excepción viaja al handler.
+	 * servicio (ReglasJuego.validarRecarga). El dominio solo mueve balas.
 	 */
 	@Override
 	@Transactional
 	public ResultadoRecarga recargar(Long id) {
 		Arma arma = obtener(id);
+		ReglasJuego.validarRecarga(arma);
 		String mensaje = arma.recargar();
 		armaRepository.save(arma);
 		return new ResultadoRecarga(arma.getId(), arma.getNombre(), mensaje, arma.getEstado());
@@ -182,8 +178,8 @@ public class ArmaServiceImpl implements ArmaService {
 
 	/**
 	 * SIMULACIÓN PERSISTIDA (dos reglas juntas): involucra Arma (tipo padre),
-	 * ArmaDeFuego y Granada. Dispara el arma de fuego, la recarga y lanza la
-	 * granada. Es transaccional: si una regla falla, no queda un estado a medias.
+	 * ArmaDeFuego y Granada. Es transaccional: si una regla falla, no queda un
+	 * estado a medias.
 	 */
 	@Override
 	@Transactional
@@ -197,16 +193,15 @@ public class ArmaServiceImpl implements ArmaService {
 			throw new SolicitudInvalidaException("El id " + idGranada + " no es una granada");
 		}
 
-        ResultadoDisparo disparo = distancia == null ? fuego.disparar() : fuego.disparar(distancia);
-        if (!disparo.exito()) {
-            throw falloDeDisparo(fuego, disparo);
-        }
-        String recarga = fuego.recargar();
+		double distanciaEfectiva = o(distancia, (double) Arma.DISTANCIA_POR_DEFECTO);
+		ReglasJuego.validarDisparo(fuego, distanciaEfectiva);
+		ResultadoDisparo disparo = fuego.disparar(distanciaEfectiva);
 
-        ResultadoDisparo lanzamiento = distancia == null ? granada.disparar() : granada.disparar(distancia);
-        if (!lanzamiento.exito()) {
-            throw falloDeDisparo(granada, lanzamiento);
-        }
+		ReglasJuego.validarRecarga(fuego);
+		String recarga = fuego.recargar();
+
+		ReglasJuego.validarDisparo(granada, distanciaEfectiva);
+		ResultadoDisparo lanzamiento = granada.disparar(distanciaEfectiva);
 
 		armaRepository.save(fuego);
 		armaRepository.save(granada);
@@ -231,25 +226,11 @@ public class ArmaServiceImpl implements ArmaService {
 
     private static void validarId(Long id) {
         if (id == null || id <= 0) {
-            throw new SolicitudInvalidaException("El id debe ser un numero positivo");
+            throw new SolicitudInvalidaException("El id debe ser un número positivo");
         }
     }
 
-    /**
-     * Traduce el fallo del dominio al conflicto de partida concreto: cargador
-     * vacío, granada agotada o granada en cooldown. El dominio decide si se
-     * puede usar; el servicio solo le da nombre a la regla incumplida.
-     */
-    private static RuntimeException falloDeDisparo(Arma arma, ResultadoDisparo resultado) {
-        if (arma instanceof Granada granada) {
-            return granada.sinGranadas()
-                    ? new GranadaAgotadaException(resultado.efecto())
-                    : new GranadaEnCooldownException(resultado.efecto());
-        }
-        return new CargadorVacioException(resultado.efecto());
-    }
-
-	/** Codigo que usa el JSON de creacion; sirve para impedir cambios de tipo en PUT. */
+	/** Código que usa el JSON de creación; sirve para impedir cambios de tipo en PUT. */
 	private static String codigoDe(Arma arma) {
 		if (arma instanceof Pistola) {
 			return TiposArma.PISTOLA;

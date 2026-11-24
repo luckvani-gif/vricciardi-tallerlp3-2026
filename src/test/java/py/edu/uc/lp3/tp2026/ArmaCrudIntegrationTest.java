@@ -95,7 +95,7 @@ class ArmaCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("Cada error de la jerarquia tiene su codigo HTTP")
+    @DisplayName("Cada error de la jerarquía tiene su código HTTP")
     void erroresTienenHandlerPorTipo() throws Exception {
         mockMvc.perform(get("/api/armas/{id}", 999999))
                 .andExpect(status().isNotFound())
@@ -135,7 +135,7 @@ class ArmaCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("La simulacion de dano y de recarga modifica la fila en H2")
+    @DisplayName("La simulación de daño y de recarga modifica la fila en H2")
     void simulacionDeDanioYRecarga() throws Exception {
         long id = crear(new RifleJson("AK-47", 2700, 36, 2, 2));
 
@@ -169,7 +169,7 @@ class ArmaCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("La simulacion involucra Arma, ArmaDeFuego y Granada y deja todo persistido")
+    @DisplayName("La simulación involucra Arma, ArmaDeFuego y Granada y deja todo persistido")
     void simulacionInvolucraLasTresClases() throws Exception {
         long fuegoId = crear(new RifleJson("AK-47", 2700, 36, 5, 15));
         long granadaId = crearGranada();

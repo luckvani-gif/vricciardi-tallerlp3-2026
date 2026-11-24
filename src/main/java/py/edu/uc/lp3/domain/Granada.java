@@ -5,74 +5,63 @@ import java.util.Optional;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 
-import py.edu.uc.lp3.exceptions.GranadaNoRecargableException;
-
-/**
- * Las granadas no tienen cargador: se controlan por cantidad y cooldown.
- * Ese control es final y private: desde afuera no se puede saltear el cooldown.
- */
 @Entity
 @DiscriminatorValue("granada")
 public abstract class Granada extends Arma {
 
     @Column
-    private Long cooldownMs;
+    private int cantidad;
 
-    @Column
-    private Double radio;
+    @Column(name = "cooldown_ms")
+    private int cooldownMs;
 
-    @Column
-    private Integer cantidad;
+    @Column(name = "radio_m")
+    private int radio;
 
-    private long ultimoLanzamientoMs = -1;
+    @Column(name = "ultimo_lanzamiento_ms")
+    private long ultimoLanzamientoMs;
 
-    /** Constructor vacío para JPA. */
     protected Granada() {
     }
 
-    /** Constructor simple: cooldown, radio y cantidad de fábrica. */
-    protected Granada(String nombre, int precio, int danioBase) {
-        this(nombre, precio, danioBase, 3000, 5, 1);
-    }
-
-    /** Constructor sobrecargado: el llamador decide cooldown, radio y cantidad. */
     protected Granada(String nombre, int precio, int danioBase,
-                      long cooldownMs, double radio, int cantidad) {
+                      int cooldownMs, int radio, int cantidad) {
         super(nombre, precio, danioBase);
-        if (cooldownMs < 0) {
-            throw new IllegalArgumentException("El cooldown no puede ser negativo");
-        }
-        if (radio <= 0) {
-            throw new IllegalArgumentException("El radio debe ser positivo");
-        }
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException("Debe haber al menos una granada");
-        }
         this.cooldownMs = cooldownMs;
         this.radio = radio;
         this.cantidad = cantidad;
     }
 
-    @PrePersist
-    @PreUpdate
-    private void validarGranadaAntesDeGuardar() {
-        if (cooldownMs == null || cooldownMs < 0) {
-            throw new IllegalArgumentException("El cooldown no puede ser negativo");
-        }
-        if (radio == null || radio <= 0) {
-            throw new IllegalArgumentException("El radio debe ser positivo");
-        }
-        if (cantidad == null || cantidad < 0) {
-            throw new IllegalArgumentException("La cantidad de granadas no puede ser negativa");
-        }
-        if (ultimoLanzamientoMs < -1) {
-            throw new IllegalArgumentException("El último lanzamiento no es válido");
-        }
-        // cantidad == 0 es legal después de lanzar la última granada. El mínimo
-        // de 1 se exige al construir, no al persistir el estado ya usado.
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public int getCooldownMs() {
+        return cooldownMs;
+    }
+
+    public int getRadio() {
+        return radio;
+    }
+
+    public long getUltimoLanzamientoMs() {
+        return ultimoLanzamientoMs;
+    }
+
+    @jakarta.persistence.Transient
+    public long getCooldownRestanteMs() {
+        long transcurrido = System.currentTimeMillis() - ultimoLanzamientoMs;
+        return Math.max(0, cooldownMs - transcurrido);
+    }
+
+    public final boolean sinGranadas() {
+        return cantidad == 0;
+    }
+
+    @Override
+    public final String recargar() {
+        return "Las granadas no se recargan: hay que comprar otra";
     }
 
     @Override
@@ -80,7 +69,7 @@ public abstract class Granada extends Arma {
         if (cantidad == 0) {
             return Optional.of("No quedan granadas");
         }
-        long restante = cooldownRestanteMs();
+        long restante = getCooldownRestanteMs();
         if (restante > 0) {
             return Optional.of("En cooldown: faltan " + restante + " ms");
         }
@@ -93,13 +82,15 @@ public abstract class Granada extends Arma {
         ultimoLanzamientoMs = System.currentTimeMillis();
     }
 
-    /** Las granadas no son recargables: la regla la sostiene el dominio. */
     @Override
-    public final String recargar() {
-        throw new GranadaNoRecargableException("Las granadas no se recargan: hay que comprar otra");
+    @jakarta.persistence.Transient
+    public final String getEstado() {
+        long restante = getCooldownRestanteMs();
+        return restante == 0
+                ? cantidad + " granadas | lista"
+                : cantidad + " granadas | cooldown " + restante + " ms";
     }
 
-    /** Daño en área: máximo en el centro, 0 fuera del radio. */
     @Override
     protected int calcularDanio(double distancia) {
         if (distancia > radio) {
@@ -109,32 +100,7 @@ public abstract class Granada extends Arma {
     }
 
     @Override
-    protected String detalleTienda() {
-        return "Radio " + radio + " m | Cooldown " + cooldownMs + " ms";
-    }
-
-    @Override
-    public final String getEstado() {
-        return "Quedan " + cantidad + " | cooldown " + cooldownRestanteMs() + " ms";
-    }
-
-    private long cooldownRestanteMs() {
-        if (ultimoLanzamientoMs < 0) {
-            return 0;
-        }
-        long pasado = System.currentTimeMillis() - ultimoLanzamientoMs;
-        return Math.max(0, cooldownMs - pasado);
-    }
-
-    public final double getRadio() {
-        return radio;
-    }
-
-    public final int getCantidad() {
-        return cantidad;
-    }
-
-    public final boolean sinGranadas() {
-        return cantidad == 0;
+    protected final String detalleTienda() {
+        return "Radio " + radio + " m | Cantidad " + cantidad;
     }
 }
