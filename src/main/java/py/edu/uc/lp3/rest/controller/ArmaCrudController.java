@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +49,8 @@ public class ArmaCrudController {
     @Operation(summary = "Crear arma", description = "Discriminador `tipo`: rifle, pistola, subfusil, escopeta, francotirador, humo, flash, incendiaria o senal. `cargador` y `reserva` van juntos.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Arma creada y persistida"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos, tipo desconocido o cargador sin reserva") })
+            @ApiResponse(responseCode = "400", description = "Datos inválidos, tipo desconocido o cargador sin reserva",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public ResponseEntity<Arma> crear(@RequestBody ArmaRequest solicitud) {
         Arma creada = armaService.crear(
                 solicitud.tipo(), solicitud.nombre(), solicitud.precio(),
@@ -56,6 +59,11 @@ public class ArmaCrudController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar armas", description = "Devuelve las armas persistidas; `nombre` filtra por coincidencia parcial sin distinguir mayúsculas y `precioMax` incluye ese precio. Sin filtros devuelve todas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de armas, posiblemente vacía"),
+            @ApiResponse(responseCode = "400", description = "Algún parámetro de filtro tiene un tipo inválido",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public List<Arma> listar(@RequestParam(required = false) String nombre,
                              @RequestParam(required = false) Integer precioMax) {
         return armaService.buscar(nombre, precioMax);
@@ -76,29 +84,54 @@ public class ArmaCrudController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener arma por id", description = "Devuelve el arma persistida con su estado actual de munición o granadas.")
-    @ApiResponse(responseCode = "404", description = "No existe un arma con ese id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arma persistida con su estado actual"),
+            @ApiResponse(responseCode = "400", description = "El id no es un número positivo",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No existe un arma con ese id",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public Arma obtener(@PathVariable Long id) {
         return armaService.obtener(id);
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar un arma", description = "Actualiza `nombre`, `precio` y `danio` de un arma persistida. `tipo` no puede cambiar: si se envía, debe coincidir con el tipo guardado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arma actualizada y persistida"),
+            @ApiResponse(responseCode = "400", description = "Faltan datos obligatorios, el id no es positivo o los datos son inválidos",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No existe un arma con ese id",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "CambioDeTipoException: no se puede cambiar el tipo de un arma persistida",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public Arma actualizar(@PathVariable Long id, @RequestBody ArmaRequest solicitud) {
         return armaService.actualizar(id, solicitud.tipo(), solicitud.nombre(),
                 solicitud.precio(), solicitud.danio());
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar un arma", description = "Borra de A1 el arma persistida con ese id; responde sin cuerpo cuando lo logra.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Arma eliminada; respuesta sin contenido"),
+            @ApiResponse(responseCode = "400", description = "El id no es un número positivo",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No existe un arma con ese id",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         armaService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/disparar")
-    @Operation(summary = "Regla 1: disparar o lanzar", description = "Consume una bala o una granada y calcula el daño según la distancia.")
+    @Operation(summary = "Regla 1: disparar o lanzar", description = "Consume una bala o una granada y calcula el daño según la distancia, expresada en metros.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Disparo ejecutado y estado persistido"),
-            @ApiResponse(responseCode = "400", description = "Distancia negativa"),
-            @ApiResponse(responseCode = "409", description = "CargadorVacioException, GranadaAgotadaException o GranadaEnCooldownException") })
+            @ApiResponse(responseCode = "400", description = "Distancia negativa o id inválido",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No existe un arma con ese id",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "CargadorVacioException, GranadaAgotadaException o GranadaEnCooldownException; el cuerpo identifica la regla incumplida en `tipo`",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public ResultadoDisparo disparar(@PathVariable Long id,
             @RequestParam(required = false) Double distancia) {
         return armaService.disparar(id, distancia);
@@ -108,7 +141,10 @@ public class ArmaCrudController {
     @Operation(summary = "Regla 2: recargar", description = "Pasa munición de la reserva al cargador; las granadas no se recargan.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Recarga persistida"),
-            @ApiResponse(responseCode = "409", description = "CargadorLlenoException, SinReservaException o GranadaNoRecargableException") })
+            @ApiResponse(responseCode = "404", description = "No existe un arma con ese id",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "CargadorLlenoException, SinReservaException o GranadaNoRecargableException; el cuerpo identifica la regla incumplida en `tipo`",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public ResultadoRecarga recargar(@PathVariable Long id) {
         return armaService.recargar(id);
     }
@@ -117,8 +153,12 @@ public class ArmaCrudController {
     @Operation(summary = "Simulación local", description = "Dispara y recarga un arma de fuego, y lanza una granada. Transaccional: si falla una regla, no queda estado a medias.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Simulación persistida"),
-            @ApiResponse(responseCode = "400", description = "Ids inválidos"),
-            @ApiResponse(responseCode = "409", description = "Conflicto de alguna de las dos reglas") })
+            @ApiResponse(responseCode = "400", description = "Ids inválidos, tipo de arma incorrecto o distancia negativa",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No existe alguna de las armas indicadas",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflicto de alguna de las dos reglas, como CargadorVacioException, CargadorLlenoException o SinReservaException; el cuerpo identifica la regla en `tipo`",
+                    content = @Content(schema = @Schema(implementation = ManejadorErrores.ErrorResponse.class))) })
     public ResultadoSimulacion simular(@RequestParam Long fuegoId,
             @RequestParam Long granadaId,
             @RequestParam(required = false) Double distancia) {
