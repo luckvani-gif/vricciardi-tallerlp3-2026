@@ -19,7 +19,7 @@ import py.edu.uc.lp3.domain.ResultadoDisparo;
 import py.edu.uc.lp3.service.ArmaService;
 
 /**
- * Construye un arma con parametros de la URL. Siempre trabaja con el tipo padre
+ * Construye un arma con parámetros de la URL. Siempre trabaja con el tipo padre
  * Arma: el controller nunca menciona una clase concreta del dominio.
  */
 @RestController

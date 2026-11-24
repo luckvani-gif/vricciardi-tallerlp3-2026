@@ -61,7 +61,7 @@
   `COMPANEROS_TIMEOUT`.
 - Se decidió consultar **A3 primero** porque `POST /api/explosiones/validar` no modifica su
   base, y **A2 después** porque `POST /api/armas/{id}/disparar` sí escribe en su H2.
-- Se creó `jugadas_cruzadas` con escritura transaccional: sólo se inserta cuando A2 y A3
+- Se creó `jugadas_cruzadas` con escritura transaccional: solo se inserta cuando A2 y A3
   responden 200; ante un rechazo se propaga `origen`, `codigo` y `cuerpoCompanero`.
 - Se corrigió el handler de `RestClient.onStatus` para la firma de Spring Framework 7
   (`(peticion, respuesta) -> ...`) y el `timeout` nulo en el contexto de tests.
@@ -73,10 +73,18 @@
   de `disparar`/`dispararTodas`.
 - Commit de la solución POO-09: `91179e0ba41f336421a02b21e61efc6a8ba08b13`.
 
-## Sin IA
+## Con IA
 
-El modelado original de las armas, la herencia `Arma`/`ArmaDeFuego`/`Granada`, los
-constructores, las decisiones de diseño del dominio y la elección del escenario de POO-09
-son del grupo. La IA se usó para revisar el cumplimiento de los enunciados, consultar los
-OpenAPI de A2 y A3, ordenar la documentación y proponer la simulación, los handlers, el
-cliente HTTP, las pruebas y los diagramas.
+- **Del grupo:** el modelado original de las armas, la herencia `Arma`/`ArmaDeFuego`/`Granada`,
+  los constructores y las decisiones de diseño del dominio; también entregó el enunciado
+  POO-09, la lista de grupos y el orden de consulta A3 primero / A2 después (prompts 9 y 13).
+- **De la IA, a pedido del grupo:** identificar los roles A1, A2 y A3 y proponer qué regla
+  tomar de cada compañero (prompt 9), consultar los OpenAPI y los datos vivos para elegir
+  los ids válidos y un id de rechazo determinista (prompt 10) y documentar por qué conviene
+  ese orden (A3 no modifica su base; A2 sí escribe en la suya).
+- **De la IA:** el cliente HTTP con URLs y timeout configurables, la transacción que persiste
+  `jugadas_cruzadas` solo cuando los dos compañeros aceptan, la propagación de `origen`,
+  `codigo` y `cuerpoCompanero`, y los tests con clientes falsos (prompts 12, 14 y 15).
+- **De la IA:** la revisión de los enunciados, la simulación, la jerarquía de excepciones y
+  sus handlers, los diagramas Mermaid por caso, la colección Insomnia POO-09 y la
+  actualización de README, ESPECIFICACIONES y BITACORA (prompts 1-8 y 16).

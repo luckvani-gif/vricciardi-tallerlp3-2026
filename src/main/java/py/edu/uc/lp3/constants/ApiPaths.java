@@ -1,14 +1,14 @@
 package py.edu.uc.lp3.constants;
 
 //Clase estática que utilizamos para centralizar todas las constantes
-//que utlilizaremos como parte de la API REST para el taller de CS2
+//que utilizaremos como parte de la API REST para el taller de CS2
 public class ApiPaths {
 
 	private static final String BASE_API = "";
 
 	public static final String INDEX = BASE_API + "/";
 
-	//Operaciones con armas (catalogo en memoria de POO-06)
+	//Operaciones con armas (catálogo en memoria de POO-06)
 	public static final String ARMAS = BASE_API + "/armas";
 
 	//CRUD persistido en H2 (POO-08)

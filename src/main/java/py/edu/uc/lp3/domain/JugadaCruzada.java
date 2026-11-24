@@ -9,7 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** Jugada cruzada persistida en A1: existe sólo si A2 y A3 aceptaron. */
+/** Jugada cruzada persistida en A1: existe solo si A2 y A3 aceptaron. */
 @Entity
 @Table(name = "jugadas_cruzadas")
 public class JugadaCruzada {

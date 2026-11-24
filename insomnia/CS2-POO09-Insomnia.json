@@ -18,7 +18,7 @@
       "parentId": "wrk_poo09",
       "name": "Base Environment POO-09",
       "data": {
-        "base_url": "http://localhost:8080",
+        "base_url": "http://localhost:8081",
         "a2_base_url": "https://desktop-hrm8vjo.tailde75e4.ts.net",
         "a3_base_url": "https://ariel.tail26e794.ts.net",
         "fuego_id": "1",
@@ -62,9 +62,9 @@
       "_id": "req_p09_swagger_a1",
       "_type": "request",
       "parentId": "grp_p09_openapi",
-      "name": "GET /swagger-ui/index.html - Swagger de A1",
+      "name": "GET /swagger-ui.html - Swagger de A1",
       "method": "GET",
-      "url": "{{ _.base_url }}/swagger-ui/index.html",
+      "url": "{{ _.base_url }}/swagger-ui.html",
       "body": {},
       "headers": []
     },
@@ -214,7 +214,7 @@
       "parentId": "req_p09_rechazo_a2",
       "name": "Ejemplo: 404 rechazo de A2",
       "status": 404,
-      "body": "{\"origen\":\"A2\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":404,\"error\":\"Rechazo de A2 (HTTP 404): no existe un arma con ese id\",\"cuerpoCompanero\":\"{\\\"status\\\":404,\\\"error\\\":\\\"Not Found\\\",\\\"mensaje\\\":\\\"No existe un arma con id 999999\\\"}\"}",
+      "body": "{\"origen\":\"A2\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":404,\"error\":\"Rechazo de A2 (HTTP 404): {\\\"status\\\":404,\\\"error\\\":\\\"Not Found\\\",\\\"mensaje\\\":\\\"No existe un arma con id 999999\\\"}\",\"cuerpoCompanero\":\"{\\\"status\\\":404,\\\"error\\\":\\\"Not Found\\\",\\\"mensaje\\\":\\\"No existe un arma con id 999999\\\"}\"}",
       "headers": [{ "name": "Content-Type", "value": "application/json" }]
     },
     {
@@ -236,7 +236,7 @@
       "parentId": "req_p09_rechazo_a3",
       "name": "Ejemplo: 409 rechazo de A3",
       "status": 409,
-      "body": "{\"origen\":\"A3\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":409,\"error\":\"Rechazo de A3 (HTTP 409): GranadaYaDetonadaException\",\"cuerpoCompanero\":\"{\\\"status\\\":409,\\\"error\\\":\\\"Conflict\\\",\\\"tipo\\\":\\\"GranadaYaDetonadaException\\\",\\\"mensaje\\\":\\\"La granada ya fue detonada\\\"}\"}",
+      "body": "{\"origen\":\"A3\",\"tipo\":\"RechazoCompaneroException\",\"codigo\":409,\"error\":\"Rechazo de A3 (HTTP 409): {\\\"status\\\":409,\\\"error\\\":\\\"Conflict\\\",\\\"tipo\\\":\\\"GranadaYaDetonadaException\\\",\\\"mensaje\\\":\\\"La granada ya fue detonada\\\"}\",\"cuerpoCompanero\":\"{\\\"status\\\":409,\\\"error\\\":\\\"Conflict\\\",\\\"tipo\\\":\\\"GranadaYaDetonadaException\\\",\\\"mensaje\\\":\\\"La granada ya fue detonada\\\"}\"}",
       "headers": [{ "name": "Content-Type", "value": "application/json" }]
     }
   ]

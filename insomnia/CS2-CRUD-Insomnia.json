@@ -10,7 +10,7 @@
       "parentId": "wrk_cs2",
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:8080",
+        "base_url": "http://localhost:8081",
         "arma_id": "1",
         "granada_id": "2",
         "tipo": "rifle",

@@ -12,7 +12,7 @@ import py.edu.uc.lp3.constants.ApiPaths;
 import py.edu.uc.lp3.constants.TiposArma;
 import py.edu.uc.lp3.service.ArmaService;
 
-/** Informacion del servicio: que tipos de arma hay y como llamarlos. */
+/** Información del servicio: qué tipos de arma hay y cómo llamarlos. */
 @RestController
 @RequestMapping(ApiPaths.INDEX)
 public class IndexController {

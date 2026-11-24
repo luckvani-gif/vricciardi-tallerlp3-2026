@@ -74,5 +74,5 @@ La simulación `POST /api/armas/simular` dispara un `ArmaDeFuego`, la recarga y 
   `arma_vacia_id` y `arma_llena_id`.
 - Seguir el orden: crear rifle y granada, leer, actualizar, simular, ver el estado
   persistido, preparar los rifles de los conflictos, probar errores y eliminar.
-- Abrir la consola H2 en `http://localhost:8080/h2-console` con
+- Abrir la consola H2 en `http://localhost:8081/h2-console` con
   `jdbc:h2:file:./data/cs2`, usuario `sa`, sin contraseña, y ver la tabla `ARMAS`.
