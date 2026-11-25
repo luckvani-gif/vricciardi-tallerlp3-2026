@@ -85,8 +85,8 @@ el H2 de A1 **solo si los dos compañeros la aceptan** y las reglas locales de A
 | Dueño | Regla 1 | Regla 2 | Regla consumida por el escenario |
 |---|---|---|---|
 | **A1** | Disparo consume munición y calcula daño según distancia. | Recarga desde la reserva con control de cargador lleno. | Las dos, vía `ArmaService.simular(fuegoId, granadaId, distancia)`, con persistencia en `jugadas_cruzadas`. |
-| **A2** | [`POST /api/armas/{id}/disparar`](http://10.30.13.183:8081/v3/api-docs) aplica daño y consume munición de su catálogo. | **Regla 2 pendiente de confirmación de Mauricio Pecci**: debe completar su OpenAPI o indicarla; el documento accesible solo expone la operación de disparo. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
-| **A3** | [`POST /api/explosiones/validar`](http://10.30.14.44:8080/v3/api-docs) calcula daño por radio y empuje sin detonar ni modificar su base. | **Regla 2 pendiente de confirmación de Ariel Gaona**: debe completar su OpenAPI o indicarla; el documento accesible solo expone esa validación. | Regla 1: `POST /api/explosiones/validar` con `{"granadaId":13,"x":0,"y":0,"z":0}`. |
+| **A2** | [`POST /api/armas/{id}/disparar`](http://10.30.13.183:8081/v3/api-docs) aplica daño y consume munición de su catálogo. | `POST /api/armas/{id}/cargar-municion`: recarga el arma de fuego hasta su máximo; las granadas no se recargan. Error: 400 `CARGA_MUNICION_INVALIDA`. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
+| **A3** | [`POST /api/explosiones/validar`](http://10.30.14.44:8080/v3/api-docs) daño de la explosión HE: daña a los jugadores dentro del radio y el chaleco lo reduce a la mitad. | Empuje: las armas tiradas dentro del radio salen despedidas lejos del centro. Se consulta junto con la regla 1 en `POST /api/explosiones/validar`. Errores: 409 `GranadaYaDetonadaException`, 400, 404. | Las dos reglas, con `POST /api/explosiones/validar`. |
 
 Las operaciones de los OpenAPI ajenos que se consumen son exactamente esas dos rutas. A1 no
 copia clases de los otros dominios: `CompaneroRestClient` arma el JSON con los campos que
@@ -95,11 +95,7 @@ firma consultada expone el parámetro en la URL y el cuerpo lleva `objetivoId`, 
 y `critico`; si el compañero cambia esa firma, se ajusta el cliente sin tocar el escenario.
 Un id de atacante inexistente (`999999`) responde 404 y sirve como rechazo determinista.
 
-Las reglas 2 de A2 y A3 no se inventan: el enunciado prevé pedirle al autor que complete su
-OpenAPI cuando la documentación no alcanza. Los documentos de los dos compañeros no fueron
-accesibles desde este entorno, por lo que sus reglas 2 quedan explícitamente pendientes de
-Mauricio Pecci y Ariel Gaona. Antes de entregar hay que confirmar también que los README de
-A2 y A3 listen las mismas tres URLs (A1, A2 y A3) que figuran acá.
+Las reglas de A2 y A3 salen de los README de sus repositorios: [Mauricio Pecci](https://github.com/MauricioPecci/MPecci-tplp3-2026/tree/feature/rest) y [Ariel Gaona](https://github.com/ferue/agaona-taller-git-2026/tree/feature/RESTApi).
 
 ### Orden de las llamadas
 
