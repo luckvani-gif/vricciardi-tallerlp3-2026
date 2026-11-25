@@ -5,10 +5,10 @@
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
 | **A1 (yo)** | Vanessa Ricciardi | `http://100.95.213.93:8081` | `http://100.95.213.93:8081/v3/api-docs` |
-| **A2** | Mauricio Pecci | `https://desktop-hrm8vjo.tailde75e4.ts.net` | `https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs` |
-| **A3** | Ariel Gaona | `https://ariel.tail26e794.ts.net` | `https://ariel.tail26e794.ts.net/v3/api-docs` |
+| **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
+| **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
 
-Observación: Usamos Tailscale porque los servicios corren en las PCs de cada estudiante, detrás de routers con NAT y sin IP pública. Tailscale crea una red privada cifrada (WireGuard) con IPs y nombres estables, y permite que A1, A2 y A3 se consuman entre sí sin abrir puertos ni exponer los servicios a internet.
+Observación: Los servicios corren en las PCs de cada estudiante dentro de la red del laboratorio, por eso A2 y A3 se exponen con las IPs `10.30.13.183:8081` y `10.30.14.44:8080` respectivamente. A1 escucha en `localhost:8081` y consume a sus compañeros mediante esas direcciones de la red local.
 
 Regla tomada de **A2**: `POST /api/armas/{id}/disparar` aplica su regla de daño y munición sobre un arma de su catálogo; responde 200 si el disparo es válido y 404/400 si el id o el estado no sirven.
 

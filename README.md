@@ -72,8 +72,8 @@ Para cambiar el puerto: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--se
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
 | **A1 (yo)** | Vanessa Ricciardi (luckvani-gif) | `http://100.95.213.93:8081` (local `http://localhost:8081`) | `http://100.95.213.93:8081/v3/api-docs` |
-| **A2** | Mauricio Pecci | `https://desktop-hrm8vjo.tailde75e4.ts.net` | `https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs` |
-| **A3** | Ariel Gaona | `https://ariel.tail26e794.ts.net` | `https://ariel.tail26e794.ts.net/v3/api-docs` |
+| **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
+| **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
 
 **Hecho del juego que exige las dos validaciones:** un ataque coordinado. El jugador de A1
 dispara su rifle, recarga y lanza su humo; antes de registrar la jugada pide a A3 que
@@ -85,8 +85,8 @@ el H2 de A1 **solo si los dos compañeros la aceptan** y las reglas locales de A
 | Dueño | Regla 1 | Regla 2 | Regla consumida por el escenario |
 |---|---|---|---|
 | **A1** | Disparo consume munición y calcula daño según distancia. | Recarga desde la reserva con control de cargador lleno. | Las dos, vía `ArmaService.simular(fuegoId, granadaId, distancia)`, con persistencia en `jugadas_cruzadas`. |
-| **A2** | [`POST /api/armas/{id}/disparar`](https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs) aplica daño y consume munición de su catálogo. | **Regla 2 pendiente de confirmación de Mauricio Pecci**: debe completar su OpenAPI o indicarla; el documento accesible solo expone la operación de disparo. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
-| **A3** | [`POST /api/explosiones/validar`](https://ariel.tail26e794.ts.net/v3/api-docs) calcula daño por radio y empuje sin detonar ni modificar su base. | **Regla 2 pendiente de confirmación de Ariel Gaona**: debe completar su OpenAPI o indicarla; el documento accesible solo expone esa validación. | Regla 1: `POST /api/explosiones/validar` con `{"granadaId":13,"x":0,"y":0,"z":0}`. |
+| **A2** | [`POST /api/armas/{id}/disparar`](http://10.30.13.183:8081/v3/api-docs) aplica daño y consume munición de su catálogo. | **Regla 2 pendiente de confirmación de Mauricio Pecci**: debe completar su OpenAPI o indicarla; el documento accesible solo expone la operación de disparo. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
+| **A3** | [`POST /api/explosiones/validar`](http://10.30.14.44:8080/v3/api-docs) calcula daño por radio y empuje sin detonar ni modificar su base. | **Regla 2 pendiente de confirmación de Ariel Gaona**: debe completar su OpenAPI o indicarla; el documento accesible solo expone esa validación. | Regla 1: `POST /api/explosiones/validar` con `{"granadaId":13,"x":0,"y":0,"z":0}`. |
 
 Las operaciones de los OpenAPI ajenos que se consumen son exactamente esas dos rutas. A1 no
 copia clases de los otros dominios: `CompaneroRestClient` arma el JSON con los campos que
@@ -205,8 +205,8 @@ camino feliz; también hay que verificarlo en ese `GET` antes de la prueba.
 ### Configuración externalizada
 
 ```bash
-A2_BASE_URL=https://desktop-hrm8vjo.tailde75e4.ts.net \
-A3_BASE_URL=https://ariel.tail26e794.ts.net \
+A2_BASE_URL=http://10.30.13.183:8081 \
+A3_BASE_URL=http://10.30.14.44:8080 \
 COMPANEROS_TIMEOUT=5s \
 ./mvnw spring-boot:run
 ```
@@ -255,8 +255,8 @@ spring.jpa.hibernate.ddl-auto=update                # crea/actualiza el esquema 
 spring.jpa.open-in-view=false                       # el acceso a datos no queda abierto fuera del servicio
 spring.h2.console.enabled=true                      # habilita la consola web
 spring.h2.console.path=/h2-console                  # ruta de la consola
-companeros.a2-base-url=${A2_BASE_URL:https://desktop-hrm8vjo.tailde75e4.ts.net}
-companeros.a3-base-url=${A3_BASE_URL:https://ariel.tail26e794.ts.net}
+companeros.a2-base-url=${A2_BASE_URL:http://10.30.13.183:8081}
+companeros.a3-base-url=${A3_BASE_URL:http://10.30.14.44:8080}
 companeros.timeout=${COMPANEROS_TIMEOUT:5s}          # conexión y lectura
 ```
 

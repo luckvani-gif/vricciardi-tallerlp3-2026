@@ -19,8 +19,8 @@
       "name": "Base Environment POO-09",
       "data": {
         "base_url": "http://localhost:8081",
-        "a2_base_url": "https://desktop-hrm8vjo.tailde75e4.ts.net",
-        "a3_base_url": "https://ariel.tail26e794.ts.net",
+        "a2_base_url": "http://10.30.13.183:8081",
+        "a3_base_url": "http://10.30.14.44:8080",
         "fuego_id": "1",
         "granada_id": "2",
         "a2_atacante_id": "1",
