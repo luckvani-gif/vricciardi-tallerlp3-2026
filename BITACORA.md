@@ -67,11 +67,12 @@
   (`(peticion, respuesta) -> ...`) y el `timeout` nulo en el contexto de tests.
 - Se agregaron `EscenarioCruzadoTest` con clientes falsos, diagramas Mermaid por caso y la
   colección `insomnia/CS2-POO09-Insomnia.json` con preparación, happy path y rechazos.
-- Verificación final: `./mvnw test` ejecuta **30 pruebas** con **BUILD SUCCESS**;
-  `SobrecargaSobreescrituraTests` aporta **11**, `EscenarioCruzadoTest` aporta **4** y el
-  diagrama Mermaid de POO-08 muestra los constructores simple/sobrecargado y las dos firmas
-  de `disparar`/`dispararTodas`.
-- Commit de la solución POO-09: `91179e0ba41f336421a02b21e61efc6a8ba08b13`.
+- Verificación final: `./mvnw clean test` ejecuta **34 pruebas** con **BUILD SUCCESS**,
+  0 errores y 0 fallos; `SobrecargaSobreescrituraTests` aporta **11**, `EscenarioCruzadoTest`
+  aporta **5** y el diagrama Mermaid de POO-08 muestra los constructores simple/sobrecargado
+  y las dos firmas de `disparar`/`dispararTodas`.
+- Commit de la solución POO-09: `da94f4641b676abd4c40123f904f43b1db6ca8d4` (actualizar con
+  `git rev-parse HEAD` si hay nuevos commits antes de entregar).
 
 ## Con IA
 

@@ -47,7 +47,7 @@ Los diagramas Mermaid de cada caso están en [`docs/POO-09-diagramas.md`](POO-09
 
 ## Enlace al commit de la solución
 
-[`91179e0ba41f336421a02b21e61efc6a8ba08b13`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/91179e0ba41f336421a02b21e61efc6a8ba08b13) — *feat: escenario ataque-coordinado con APIs cruzadas POO-09*.
+[`da94f4641b676abd4c40123f904f43b1db6ca8d4`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/da94f4641b676abd4c40123f904f43b1db6ca8d4) — último commit de la entrega (`git rev-parse HEAD`).
 
 Si se vuelve a enviar la tarea después de las correcciones, reemplazar este hash por el del
 último commit (`git rev-parse HEAD`) también en Classroom.

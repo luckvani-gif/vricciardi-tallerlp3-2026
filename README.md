@@ -12,8 +12,9 @@ Licencia: Apache License 2.0.
 
 | Qué | Dónde |
 |---|---|
-| Commit POO-08 corregido | [`54e1e9fe2173fe2310458c916a9665a5f6992193`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/54e1e9fe2173fe2310458c916a9665a5f6992193) — entregado el 9/11 a las 21:56, dentro del plazo |
-| Commit POO-09 | [`91179e0ba41f336421a02b21e61efc6a8ba08b13`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/91179e0ba41f336421a02b21e61efc6a8ba08b13) — *feat: escenario ataque-coordinado con APIs cruzadas POO-09* |
+| Commit POO-08 original | [`54e1e9fe2173fe2310458c916a9665a5f6992193`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/54e1e9fe2173fe2310458c916a9665a5f6992193) — entregado el 9/11 a las 21:56, dentro del plazo |
+| Commit POO-08 corregido | [`25b9e7469bf4f8ffb92154fe47f5337c7cfcbfdd`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/25b9e7469bf4f8ffb92154fe47f5337c7cfcbfdd) — *refactor: mueve validaciones del dominio a servicios* (24/11) |
+| Commit POO-09 | [`da94f4641b676abd4c40123f904f43b1db6ca8d4`](https://github.com/luckvani-gif/vricciardi-tallerlp3-2026/commit/da94f4641b676abd4c40123f904f43b1db6ca8d4) — último commit de la entrega (`git rev-parse HEAD`) |
 | Código | `src/main/java/py/edu/uc/lp3` |
 | Pruebas | `src/test/java` (`./mvnw test`, 34 tests) |
 | OpenAPI en vivo | `http://localhost:8081/v3/api-docs` y `http://localhost:8081/swagger-ui.html` |
@@ -25,21 +26,21 @@ Licencia: Apache License 2.0.
 | Diagramas Mermaid | [`docs/POO-09-diagramas.md`](docs/POO-09-diagramas.md) |
 
 Los cambios de corrección posteriores a `91179e0` quedan registrados en el historial de Git;
-si se vuelve a enviar la tarea a Classroom, actualizar los enlaces de las tablas con el
-último hash (`git rev-parse HEAD`).
+si se vuelve a enviar la tarea a Classroom, actualizar los hashes de esta tabla y de
+`docs/entrega-poo-09.md` con `git rev-parse HEAD` **después** del último commit.
 
 ## Estado de POO-08 (corrección recibida)
 
 Nota: **20/24** en criterios (rango 17-20) y **8,3/10** en la tarea. Desglose por criterio:
 entrega y arranque 3, paquetes 2, ocultamiento 3, herencia 3, constructores 3,
 comportamiento observable 3, Git 3 y documentación 0. El código corregido es el del commit
-`54e1e9f` (el mismo código que `92d2597` y `d48866d`; los commits posteriores cambiaron
-solo documentación).
+`25b9e74` (24/11): ahí salieron las validaciones y las excepciones de negocio de `Arma`,
+`ArmaDeFuego` y `Granada`. El commit original del 9/11 (`54e1e9f`) todavía las tenía.
 
 | Observación | Cierre |
 |---|---|
-| Paquetes (2/3): `Arma`, `ArmaDeFuego` y `Granada` lanzaban excepciones y tenían reglas de negocio; debían quedar solo con estado y las validaciones vivir en el servicio. | Cerrada: `ReglasJuego` y `ArmaServiceImpl` validan datos, munición, distancia, disparo y recarga antes de mutar; las entidades ya no lanzan excepciones de negocio. Las pruebas que antes ejercitaban esas excepciones desde el dominio ahora las ejercitan desde el servicio. |
-| Documentación (0/3): más de tres errores de ortografía en README, documentación, Javadoc y comentarios. | Cerrada: corrección de las faltas señaladas (`parámetros`, `fábrica`, `único`, `aplicación`, `compañeros`, etc.) en README, `docs/`, `BITACORA.md`, `ESPECIFICACIONES.md` y comentarios Java. |
+| Paquetes (2/3): `Arma`, `ArmaDeFuego` y `Granada` lanzaban excepciones y tenían reglas de negocio; debían quedar solo con estado y las validaciones vivir en el servicio. | Cerrada en `25b9e74`: `ReglasJuego` y `ArmaServiceImpl` validan datos, munición, distancia, disparo y recarga antes de mutar; las entidades ya no lanzan excepciones de negocio. Las pruebas que antes ejercitaban esas excepciones desde el dominio ahora las ejercitan desde el servicio. |
+| Documentación (0/3): más de tres errores de ortografía en README, documentación, Javadoc y comentarios. | Cerrada en `da94f46`: corrección de las faltas señaladas (`parámetros`, `fábrica`, `único`, `aplicación`, `compañeros`, etc.) en README, `docs/`, `BITACORA.md`, `ESPECIFICACIONES.md` y Javadoc. |
 
 ## Cómo arrancar los tres servicios (orden)
 
@@ -70,8 +71,8 @@ Para cambiar el puerto: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--se
 
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
-| **A1 (yo)** | luckvani-gif (Vricciardi) | `http://100.95.213.93:8081` (local `http://localhost:8081`) | `http://100.95.213.93:8081/v3/api-docs` |
-| **A2** | compañero de CS2 Armas API (su nombre no consta en este repositorio) | `https://desktop-hrm8vjo.tailde75e4.ts.net` | `https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs` |
+| **A1 (yo)** | Vanessa Ricciardi (luckvani-gif) | `http://100.95.213.93:8081` (local `http://localhost:8081`) | `http://100.95.213.93:8081/v3/api-docs` |
+| **A2** | Mauricio Pecci | `https://desktop-hrm8vjo.tailde75e4.ts.net` | `https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs` |
 | **A3** | Ariel Gaona | `https://ariel.tail26e794.ts.net` | `https://ariel.tail26e794.ts.net/v3/api-docs` |
 
 **Hecho del juego que exige las dos validaciones:** un ataque coordinado. El jugador de A1
@@ -84,8 +85,8 @@ el H2 de A1 **solo si los dos compañeros la aceptan** y las reglas locales de A
 | Dueño | Regla 1 | Regla 2 | Regla consumida por el escenario |
 |---|---|---|---|
 | **A1** | Disparo consume munición y calcula daño según distancia. | Recarga desde la reserva con control de cargador lleno. | Las dos, vía `ArmaService.simular(fuegoId, granadaId, distancia)`, con persistencia en `jugadas_cruzadas`. |
-| **A2** | [`POST /api/armas/{id}/disparar`](https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs) aplica daño y consume munición de su catálogo. | No aparece como operación consumible en el OpenAPI consultado; no se inventa una segunda regla. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
-| **A3** | [`POST /api/explosiones/validar`](https://ariel.tail26e794.ts.net/v3/api-docs) calcula daño por radio y empuje sin detonar ni modificar su base. | Tampoco hay una segunda regla verificable en el documento consultado. | Regla 1: `POST /api/explosiones/validar` con `{"granadaId":13,"x":0,"y":0,"z":0}`. |
+| **A2** | [`POST /api/armas/{id}/disparar`](https://desktop-hrm8vjo.tailde75e4.ts.net/v3/api-docs) aplica daño y consume munición de su catálogo. | **Regla 2 pendiente de confirmación de Mauricio Pecci**: debe completar su OpenAPI o indicarla; el documento accesible solo expone la operación de disparo. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
+| **A3** | [`POST /api/explosiones/validar`](https://ariel.tail26e794.ts.net/v3/api-docs) calcula daño por radio y empuje sin detonar ni modificar su base. | **Regla 2 pendiente de confirmación de Ariel Gaona**: debe completar su OpenAPI o indicarla; el documento accesible solo expone esa validación. | Regla 1: `POST /api/explosiones/validar` con `{"granadaId":13,"x":0,"y":0,"z":0}`. |
 
 Las operaciones de los OpenAPI ajenos que se consumen son exactamente esas dos rutas. A1 no
 copia clases de los otros dominios: `CompaneroRestClient` arma el JSON con los campos que
@@ -93,6 +94,12 @@ piden esos documentos. En A2, `distancia` viaja **en la query y en el cuerpo** p
 firma consultada expone el parámetro en la URL y el cuerpo lleva `objetivoId`, `distancia`
 y `critico`; si el compañero cambia esa firma, se ajusta el cliente sin tocar el escenario.
 Un id de atacante inexistente (`999999`) responde 404 y sirve como rechazo determinista.
+
+Las reglas 2 de A2 y A3 no se inventan: el enunciado prevé pedirle al autor que complete su
+OpenAPI cuando la documentación no alcanza. Los documentos de los dos compañeros no fueron
+accesibles desde este entorno, por lo que sus reglas 2 quedan explícitamente pendientes de
+Mauricio Pecci y Ariel Gaona. Antes de entregar hay que confirmar también que los README de
+A2 y A3 listen las mismas tres URLs (A1, A2 y A3) que figuran acá.
 
 ### Orden de las llamadas
 
@@ -660,7 +667,8 @@ classDiagram
 ./mvnw test
 ```
 
-**Resultado:** `BUILD SUCCESS` con **34 tests**: 6 de CRUD/integración, 11 de
+**Resultado verificado con `./mvnw clean test`:** `BUILD SUCCESS`, **34 tests**, 0 errores y
+0 fallos (informes de Surefire): 6 de CRUD/integración, 11 de
 sobrecarga/sobreescritura, 4 de reglas (consumo en dominio y excepciones desde el servicio),
 4 de granadas, 1 de arranque, 5 de `EscenarioCruzadoTest` (feliz, rechazo de A2, rechazo de
 A3, fallo local sin llamar a los compañeros y OpenAPI publicado) y 3 de
