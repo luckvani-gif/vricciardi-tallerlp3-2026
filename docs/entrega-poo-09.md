@@ -5,10 +5,10 @@
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
 | **A1 (yo)** | Vanessa Ricciardi | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` |
-| **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
-| **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
+| **A2** | Mauricio Pecci | `http://10.30.17.117:8081` | `http://10.30.17.117:8081/v3/api-docs` |
+| **A3** | Ariel Gaona | `http://10.30.17.157:8080` | `http://10.30.17.157:8080/v3/api-docs` |
 
-Observación: Los servicios corren en las PCs de cada estudiante dentro de la red del laboratorio, por eso A2 y A3 se exponen con las IPs `10.30.13.183:8081` y `10.30.14.44:8080` respectivamente. A1 escucha en `localhost:8081` y consume a sus compañeros mediante esas direcciones de la red local.
+Observación: Los servicios corren en las PCs de cada estudiante dentro de la red del laboratorio, por eso A2 y A3 se exponen con las IPs `10.30.17.117:8081` y `10.30.17.157:8080` respectivamente. A1 escucha en `localhost:8081` y consume a sus compañeros mediante esas direcciones de la red local.
 
 Regla tomada de **A2**: `POST /api/armas/{id}/disparar` aplica su regla de daño y munición sobre un arma de su catálogo; responde 200 si el disparo es válido y 404/400 si el id o el estado no sirven.
 

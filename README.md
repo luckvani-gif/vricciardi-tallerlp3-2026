@@ -72,8 +72,8 @@ Para cambiar el puerto: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--se
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
 | **A1 (yo)** | Vanessa Ricciardi (luckvani-gif) | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` |
-| **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
-| **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
+| **A2** | Mauricio Pecci | `http://10.30.17.117:8081` | `http://10.30.17.117:8081/v3/api-docs` |
+| **A3** | Ariel Gaona | `http://10.30.17.157:8080` | `http://10.30.17.157:8080/v3/api-docs` |
 
 **Hecho del juego que exige las dos validaciones:** un ataque coordinado. El jugador de A1
 dispara su rifle, recarga y lanza su humo; antes de registrar la jugada pide a A3 que
@@ -85,8 +85,8 @@ el H2 de A1 **solo si los dos compañeros la aceptan** y las reglas locales de A
 | Dueño | Regla 1 | Regla 2 | Regla consumida por el escenario |
 |---|---|---|---|
 | **A1** | Disparo consume munición y calcula daño según distancia. | Recarga desde la reserva con control de cargador lleno. | Las dos, vía `ArmaService.simular(fuegoId, granadaId, distancia)`, con persistencia en `jugadas_cruzadas`. |
-| **A2** | [`POST /api/armas/{id}/disparar`](http://10.30.13.183:8081/v3/api-docs) aplica daño y consume munición de su catálogo. | `POST /api/armas/{id}/cargar-municion`: recarga el arma de fuego hasta su máximo; las granadas no se recargan. Error: 400 `CARGA_MUNICION_INVALIDA`. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
-| **A3** | [`POST /api/explosiones/validar`](http://10.30.14.44:8080/v3/api-docs) daño de la explosión HE: daña a los jugadores dentro del radio y el chaleco lo reduce a la mitad. | Empuje: las armas tiradas dentro del radio salen despedidas lejos del centro. Se consulta junto con la regla 1 en `POST /api/explosiones/validar`. Errores: 409 `GranadaYaDetonadaException`, 400, 404. | Las dos reglas, con `POST /api/explosiones/validar`. |
+| **A2** | [`POST /api/armas/{id}/disparar`](http://10.30.17.117:8081/v3/api-docs) aplica daño y consume munición de su catálogo. | `POST /api/armas/{id}/cargar-municion`: recarga el arma de fuego hasta su máximo; las granadas no se recargan. Error: 400 `CARGA_MUNICION_INVALIDA`. | Regla 1: `POST /api/armas/{id}/disparar?distancia=10` con `{"objetivoId":2,"distancia":10,"critico":false}`. |
+| **A3** | [`POST /api/explosiones/validar`](http://10.30.17.157:8080/v3/api-docs) daño de la explosión HE: daña a los jugadores dentro del radio y el chaleco lo reduce a la mitad. | Empuje: las armas tiradas dentro del radio salen despedidas lejos del centro. Se consulta junto con la regla 1 en `POST /api/explosiones/validar`. Errores: 409 `GranadaYaDetonadaException`, 400, 404. | Las dos reglas, con `POST /api/explosiones/validar`. |
 
 Las operaciones de los OpenAPI ajenos que se consumen son exactamente esas dos rutas. A1 no
 copia clases de los otros dominios: `CompaneroRestClient` arma el JSON con los campos que
@@ -201,8 +201,8 @@ camino feliz; también hay que verificarlo en ese `GET` antes de la prueba.
 ### Configuración externalizada
 
 ```bash
-A2_BASE_URL=http://10.30.13.183:8081 \
-A3_BASE_URL=http://10.30.14.44:8080 \
+A2_BASE_URL=http://10.30.17.117:8081 \
+A3_BASE_URL=http://10.30.17.157:8080 \
 COMPANEROS_TIMEOUT=5s \
 ./mvnw spring-boot:run
 ```
@@ -251,8 +251,8 @@ spring.jpa.hibernate.ddl-auto=update                # crea/actualiza el esquema 
 spring.jpa.open-in-view=false                       # el acceso a datos no queda abierto fuera del servicio
 spring.h2.console.enabled=true                      # habilita la consola web
 spring.h2.console.path=/h2-console                  # ruta de la consola
-companeros.a2-base-url=${A2_BASE_URL:http://10.30.13.183:8081}
-companeros.a3-base-url=${A3_BASE_URL:http://10.30.14.44:8080}
+companeros.a2-base-url=${A2_BASE_URL:http://10.30.17.117:8081}
+companeros.a3-base-url=${A3_BASE_URL:http://10.30.17.157:8080}
 companeros.timeout=${COMPANEROS_TIMEOUT:5s}          # conexión y lectura
 ```
 
