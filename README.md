@@ -60,7 +60,7 @@ cd vricciardi-tallerlp3-2026
 ```
 
 A1 escucha en `http://localhost:8081` (puerto fijado en `application.properties`); en la
-tabla de roles figura la IP del equipo donde se expone. Consola H2:
+tabla de roles figuran las IPs de la red del laboratorio donde se exponen A2 y A3. Consola H2:
 `http://localhost:8081/h2-console`, JDBC `jdbc:h2:file:./data/cs2`, usuario `sa`, sin
 contraseña. Swagger: `http://localhost:8081/swagger-ui.html` (JSON en `/v3/api-docs`).
 Para cambiar el puerto: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8082`.
@@ -71,7 +71,7 @@ Para cambiar el puerto: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--se
 
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
-| **A1 (yo)** | Vanessa Ricciardi (luckvani-gif) | `http://100.95.213.93:8081` (local `http://localhost:8081`) | `http://100.95.213.93:8081/v3/api-docs` |
+| **A1 (yo)** | Vanessa Ricciardi (luckvani-gif) | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` |
 | **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
 | **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
 

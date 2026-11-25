@@ -4,7 +4,7 @@
 
 | Rol | Estudiante | Servicio | OpenAPI |
 |---|---|---|---|
-| **A1 (yo)** | Vanessa Ricciardi | `http://100.95.213.93:8081` | `http://100.95.213.93:8081/v3/api-docs` |
+| **A1 (yo)** | Vanessa Ricciardi | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` |
 | **A2** | Mauricio Pecci | `http://10.30.13.183:8081` | `http://10.30.13.183:8081/v3/api-docs` |
 | **A3** | Ariel Gaona | `http://10.30.14.44:8080` | `http://10.30.14.44:8080/v3/api-docs` |
 
